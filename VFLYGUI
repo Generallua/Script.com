@@ -1,0 +1,169 @@
+local speaker = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+
+local v3zero = Vector3.new(0, 0, 0)
+local v3none = Vector3.new()
+local v3inf = Vector3.new(9e9, 9e9, 9e9)
+
+local vehicleflyspeed = 1
+local velocityName = "vfly_velocity"
+local gyroName = "vfly_gyro"
+local flying = false
+
+local function getRoot(char)
+return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function stopFly()
+local root = getRoot(speaker.Character)
+if not root then return end
+for _,v in pairs(root:GetChildren()) do
+if v:IsA("BodyVelocity") and v.Name == velocityName then v:Destroy() end
+if v:IsA("BodyGyro") and v.Name == gyroName then v:Destroy() end
+end
+end
+
+local function startFly()
+stopFly()
+local root = getRoot(speaker.Character)
+if not root then return end
+
+local bv = Instance.new("BodyVelocity")
+bv.Name = velocityName
+bv.Parent = root
+bv.MaxForce = v3inf
+bv.Velocity = v3zero
+
+local bg = Instance.new("BodyGyro")
+bg.Name = gyroName
+bg.Parent = root
+bg.MaxTorque = v3inf
+bg.P = 1000
+bg.D = 50
+end
+
+RunService.RenderStepped:Connect(function()
+if not flying then return end
+local root = getRoot(speaker.Character)
+if not root then return end
+local bv = root:FindFirstChild(velocityName)
+local bg = root:FindFirstChild(gyroName)
+if not bv or not bg then return end
+
+bg.CFrame = camera.CFrame
+bv.Velocity = v3none
+
+local controlModule = require(speaker.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
+local moveVector = controlModule:GetMoveVector()
+
+if moveVector.X ~= 0 then
+bv.Velocity += camera.CFrame.RightVector * (moveVector.X * vehicleflyspeed * 50)
+end
+if moveVector.Z ~= 0 then
+bv.Velocity += -camera.CFrame.LookVector * (moveVector.Z * vehicleflyspeed * 50)
+end
+end)
+
+local function addUICorner(guiObject, cornerRadius)
+local corner = Instance.new("UICorner")
+corner.CornerRadius = cornerRadius or UDim.new(0, 6)
+corner.Parent = guiObject
+end
+
+local gui = Instance.new("ScreenGui", speaker:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 220, 0, 150)
+frame.Position = UDim2.new(0, 10, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+addUICorner(frame, UDim.new(0, 8))
+
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.new(0, 220, 0, 25)
+label.Position = UDim2.new(0, 0, 0, 5)
+label.BackgroundTransparency = 1
+label.Text = "gametool"
+label.TextColor3 = Color3.fromRGB(200, 200, 200)
+label.TextScaled = true
+label.Font = Enum.Font.SourceSansBold
+
+local speedBox = Instance.new("TextBox", frame)
+speedBox.Size = UDim2.new(0, 120, 0, 30)
+speedBox.Position = UDim2.new(0, 50, 0, 35)
+speedBox.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+speedBox.Text = tostring(vehicleflyspeed)
+speedBox.TextColor3 = Color3.new(1, 1, 1)
+speedBox.PlaceholderText = "Speed"
+speedBox.TextScaled = true
+speedBox.ClearTextOnFocus = false
+addUICorner(speedBox)
+
+local minusBtn = Instance.new("TextButton", frame)
+minusBtn.Size = UDim2.new(0, 40, 0, 30)
+minusBtn.Position = UDim2.new(0, 10, 0, 35)
+minusBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
+minusBtn.Text = "-"
+minusBtn.TextColor3 = Color3.new(1, 1, 1)
+minusBtn.TextScaled = true
+minusBtn.Font = Enum.Font.SourceSansBold
+addUICorner(minusBtn)
+
+local plusBtn = Instance.new("TextButton", frame)
+plusBtn.Size = UDim2.new(0, 40, 0, 30)
+plusBtn.Position = UDim2.new(0, 175, 0, 35)
+plusBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 50)
+plusBtn.Text = "+"
+plusBtn.TextColor3 = Color3.new(1, 1, 1)
+plusBtn.TextScaled = true
+plusBtn.Font = Enum.Font.SourceSansBold
+addUICorner(plusBtn)
+
+local toggleButton = Instance.new("TextButton", frame)
+toggleButton.Size = UDim2.new(0, 200, 0, 40)
+toggleButton.Position = UDim2.new(0, 10, 0, 75)
+toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleButton.Text = "Fly"
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.TextScaled = true
+addUICorner(toggleButton)
+
+local function updateSpeed(newSpeed)
+if newSpeed < 0 then newSpeed = 0 end
+vehicleflyspeed = newSpeed
+speedBox.Text = tostring(newSpeed)
+end
+
+minusBtn.MouseButton1Click:Connect(function()
+local current = tonumber(speedBox.Text) or vehicleflyspeed
+updateSpeed(current - 1)
+end)
+
+plusBtn.MouseButton1Click:Connect(function()
+local current = tonumber(speedBox.Text) or vehicleflyspeed
+updateSpeed(current + 1)
+end)
+
+speedBox.FocusLost:Connect(function()
+local val = tonumber(speedBox.Text)
+if val then
+updateSpeed(val)
+else
+speedBox.Text = tostring(vehicleflyspeed)
+end
+end)
+
+toggleButton.MouseButton1Click:Connect(function()
+flying = not flying
+if flying then
+startFly()
+toggleButton.Text = "UnFly"
+else
+stopFly()
+toggleButton.Text = "Fly"
+end
+end)
