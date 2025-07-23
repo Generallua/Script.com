@@ -1,0 +1,268 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local Camera = Workspace.CurrentCamera
+local LocalPlayer = Players.LocalPlayer
+
+local ignoreObstruction = false
+local ignoreSameTeam = false
+local ignoreZeroHealth = false
+local ignoreFriends = false
+local prioritizeHoldingTool = false
+local aimOnlyHoldingTool = false -- เพิ่มตัวแปรใหม่
+local enabled = false
+local circleRadius = 100
+
+local circle = Drawing.new("Circle")
+circle.Visible = false
+circle.Color = Color3.fromRGB(255, 255, 255)
+circle.Thickness = 2
+circle.Filled = false
+circle.Radius = circleRadius
+
+local screenGui = Instance.new("ScreenGui", game.CoreGui)
+screenGui.Name = "AimSettingsGui"
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 260, 0, 350) -- ปรับสูงขึ้นเล็กน้อย
+frame.Position = UDim2.new(0, 20, 0.5, -170)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BorderSizePixel = 0
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 9)
+
+local UIListLayout = Instance.new("UIListLayout", frame)
+UIListLayout.Padding = UDim.new(0, 9)
+UIListLayout.FillDirection = Enum.FillDirection.Vertical
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local function createToggle(text, default, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 27)
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.BorderSizePixel = 0
+    btn.Font = Enum.Font.SourceSansSemibold
+    btn.TextSize = 13.5
+    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+    btn.AutoButtonColor = false
+    btn.Text = text .. ": " .. (default and "✅" or "❌")
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
+
+    local enabledToggle = default
+    btn.MouseButton1Click:Connect(function()
+        enabledToggle = not enabledToggle
+        btn.Text = text .. ": " .. (enabledToggle and "✅" or "❌")
+        callback(enabledToggle)
+    end)
+    return btn
+end
+
+local function createLabeledTextbox(labelText, placeholder, defaultValue, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.9, 0, 0, 45)
+    container.BackgroundTransparency = 1
+
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(1, 0, 0, 18)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.SourceSansSemibold
+    label.TextSize = 12.75
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Text = labelText
+    label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local textbox = Instance.new("TextBox", container)
+    textbox.Size = UDim2.new(1, 0, 0, 23)
+    textbox.Position = UDim2.new(0, 0, 0, 2)
+    textbox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textbox.Font = Enum.Font.SourceSans
+    textbox.TextSize = 12.75
+    textbox.PlaceholderText = placeholder
+    textbox.Text = tostring(defaultValue)
+    textbox.ClearTextOnFocus = false
+    textbox.TextXAlignment = Enum.TextXAlignment.Center
+    Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 6)
+
+    textbox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            callback(textbox.Text)
+        end
+    end)
+
+    return container, textbox
+end
+
+createToggle("🎯 เปิดระบบ", false, function(val)
+    enabled = val
+    circle.Visible = val
+end).Parent = frame
+
+local radiusContainer, radiusBox = createLabeledTextbox("📏 กำหนดระยะวงกลม (Radius):", "10-1000", circleRadius, function(text)
+    local n = tonumber(text)
+    if n and n >= 10 and n <= 1000 then
+        circleRadius = n
+        circle.Radius = circleRadius
+    else
+        radiusBox.Text = tostring(circleRadius)
+    end
+end)
+radiusContainer.Parent = frame
+
+createToggle("🚫 ไม่เล็งหากมีสิ่งกีดขวาง", false, function(v) ignoreObstruction = v end).Parent = frame
+createToggle("👥 ไม่เล็งทีมเดียวกัน", false, function(v) ignoreSameTeam = v end).Parent = frame
+createToggle("💀 ไม่เล็งคนเลือด 0", false, function(v) ignoreZeroHealth = v end).Parent = frame
+createToggle("🤝 ไม่เล็งเพื่อนในเซิฟเวอร์", false, function(v) ignoreFriends = v end).Parent = frame
+createToggle("🛠️ ให้ความสำคัญคนถือของ", false, function(v) prioritizeHoldingTool = v end).Parent = frame
+createToggle("🔫 เล็งเฉพาะคนถือของ", false, function(v) aimOnlyHoldingTool = v end).Parent = frame
+
+local killButton = Instance.new("TextButton")
+killButton.Size = UDim2.new(0.9, 0, 0, 27)
+killButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+killButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+killButton.TextSize = 13.5
+killButton.Font = Enum.Font.SourceSansBold
+killButton.Text = "❌ ปิด GUI ทิ้ง"
+Instance.new("UICorner", killButton).CornerRadius = UDim.new(0, 7)
+killButton.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+    circle:Remove()
+end)
+killButton.Parent = frame
+
+local toggleButton = Instance.new("TextButton", screenGui)
+toggleButton.Size = UDim2.new(0, 100, 0, 30)
+toggleButton.Position = UDim2.new(1, -110, 0, 10)
+toggleButton.AnchorPoint = Vector2.new(0, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 14
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.Text = "🧰 แสดง / ซ่อน GUI"
+Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
+toggleButton.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+end)
+
+local dragging, dragInput, dragStart, startPos
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                               startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        updateInput(input)
+    end
+end)
+
+local function canAimAt(player)
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") or not player.Character:FindFirstChild("Humanoid") then return false end
+    if player == LocalPlayer then return false end
+    if ignoreZeroHealth and player.Character.Humanoid.Health <= 0 then return false end
+    if ignoreSameTeam and LocalPlayer.Team == player.Team and LocalPlayer.Team ~= nil then return false end
+    if ignoreFriends and LocalPlayer:IsFriendsWith(player.UserId) then return false end
+    if ignoreObstruction then
+        local origin = Camera.CFrame.Position
+        local headPos = player.Character.Head.Position
+        local raycastParams = RaycastParams.new()
+        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, player.Character}
+        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+        local rayResult = Workspace:Raycast(origin, (headPos - origin), raycastParams)
+        if rayResult and not rayResult.Instance:IsDescendantOf(player.Character) then
+            return false
+        end
+    end
+    return true
+end
+
+local function isHoldingTool(player)
+    if player.Character then
+        for _, child in pairs(player.Character:GetChildren()) do
+            if child:IsA("Tool") then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+RunService.RenderStepped:Connect(function()
+    local screenSize = Camera.ViewportSize
+    circle.Position = Vector2.new(screenSize.X/2, screenSize.Y/2)
+    circle.Radius = circleRadius
+
+    if not enabled then
+        circle.Visible = false
+        return
+    else
+        circle.Visible = true
+    end
+
+    local center = Vector2.new(screenSize.X/2, screenSize.Y/2)
+
+    local candidates, holdingPlayers, nonHoldingPlayers = {}, {}, {}
+    for _, player in pairs(Players:GetPlayers()) do
+        if canAimAt(player) and player.Character and player.Character:FindFirstChild("Head") then
+            if isHoldingTool(player) then
+                table.insert(holdingPlayers, player)
+            else
+                table.insert(nonHoldingPlayers, player)
+            end
+            table.insert(candidates, player)
+        end
+    end
+
+    local function findClosest(playersList)
+        local closestPlayer, closestDist = nil, circleRadius
+        for _, player in pairs(playersList) do
+            local headPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            if onScreen then
+                local dist = (Vector2.new(headPos.X, headPos.Y) - center).Magnitude
+                if dist <= closestDist then
+                    closestDist = dist
+                    closestPlayer = player
+                end
+            end
+        end
+        return closestPlayer
+    end
+
+    local closestPlayer
+
+    if aimOnlyHoldingTool then
+        closestPlayer = findClosest(holdingPlayers)
+    else
+        closestPlayer = prioritizeHoldingTool and findClosest(holdingPlayers) or findClosest(candidates)
+        if not closestPlayer then
+            closestPlayer = findClosest(nonHoldingPlayers)
+        end
+    end
+
+    if closestPlayer and closestPlayer.Character then
+        local head = closestPlayer.Character.Head
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+    end
+end)
