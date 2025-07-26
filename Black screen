@@ -1,0 +1,17 @@
+local lighting = game:GetService("Lighting")
+
+if lighting:FindFirstChild("BrightScreenEffect") then
+    lighting.BrightScreenEffect:Destroy()
+end
+
+local effect = Instance.new("ColorCorrectionEffect")
+effect.Name = "BrightScreenEffect"
+effect.Brightness = -1e8 -- ความสว่าง
+effect.Contrast = 1
+effect.Saturation = 1
+effect.TintColor = Color3.new(1, 1, 1)
+effect.Enabled = true
+effect.Parent = lighting
+
+--[[wait()     
+effect:Destroy()]]
