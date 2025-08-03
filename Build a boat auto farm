@@ -1,1 +1,63 @@
-loadstring(game:HttpGet("https://protected-roblox-scripts.onrender.com/adee4d4ed01f2354bbde87c6f697100f"))()
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function runScript()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    local humanoid = character:WaitForChild("Humanoid")
+
+    local positions = {
+        Vector3.new(-174, 119, 1376),
+        Vector3.new(-174, 119, 2161),
+        Vector3.new(-174, 119, 2941),
+        Vector3.new(-174, 119, 3721),
+        Vector3.new(-63.4018, 101.3426, 4448.233),
+        Vector3.new(-103.292, 126.6195, 5218.676),
+        Vector3.new(-86.6508, 107.0731, 5989.267),
+        Vector3.new(-54.605, 123.5101, 6764.572),
+        Vector3.new(-16.1659, 78.4883, 7532.235),
+        Vector3.new(-93.3519, 89.7333, 8299.6),
+    }
+
+    for i, pos in ipairs(positions) do
+        local supportPart = Instance.new("Part")
+        supportPart.Size = Vector3.new(4, 1, 4)
+        supportPart.Anchored = true
+        supportPart.CanCollide = true
+        supportPart.Material = Enum.Material.Neon
+        supportPart.Color = Color3.new(0, 1, 0)
+        supportPart.Transparency = 0.5
+        supportPart.Position = Vector3.new(pos.X, pos.Y - 5, pos.Z)
+        supportPart.Name = "SupportPart"
+        supportPart.Parent = workspace
+
+        hrp.CFrame = CFrame.new(pos)
+
+        if i ~= 4 then
+            workspace:WaitForChild("ClaimRiverResultsGold"):FireServer()
+        end
+
+        if i == 4 then
+            local trigger = workspace.BoatStages.NormalStages.TheEnd.GoldenChest:FindFirstChild("Trigger")
+            if hrp and trigger then
+                trigger.CFrame = CFrame.new(hrp.Position)
+            end
+        end
+
+        if i == #positions then
+            wait(2)
+            humanoid.Health = 0
+        else
+            wait(2)
+        end
+
+        supportPart:Destroy()
+    end
+end
+
+while true do
+    runScript()
+    wait(5)
+end
+
+
