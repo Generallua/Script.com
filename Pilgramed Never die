@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-local teleportY = -3890
+local teleportY = -3850
 local respawnPosition = nil
 local supportPart = nil
 local healthChangedConnection = nil
@@ -15,7 +15,7 @@ local function createSupportPart(position)
     supportPart.Anchored = true
     supportPart.CanCollide = true
     supportPart.Position = position + Vector3.new(0, 0.5, 0)
-    supportPart.Transparency = 0
+    supportPart.Transparency = 0.9
     supportPart.BrickColor = BrickColor.new("Bright yellow")
     supportPart.Name = "SupportPart"
     supportPart.Parent = workspace
@@ -63,3 +63,6 @@ if player.Character then
     onCharacterAdded(player.Character)
 end
 player.CharacterAdded:Connect(onCharacterAdded)
+
+
+print("godmode")
