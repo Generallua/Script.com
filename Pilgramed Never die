@@ -4,6 +4,22 @@ local player = Players.LocalPlayer
 local teleportY = -3965
 local respawnPosition = nil
 local heldToolName = nil
+local supportPart = nil
+
+local function createSupportPart(position)
+    if supportPart then
+        supportPart:Destroy()
+    end
+    supportPart = Instance.new("Part")
+    supportPart.Size = Vector3.new(10, 1, 10)
+    supportPart.Anchored = true
+    supportPart.CanCollide = true
+    supportPart.Position = position + Vector3.new(0, 0.5, 0)
+    supportPart.Transparency = 0.3
+    supportPart.BrickColor = BrickColor.new("Bright yellow")
+    supportPart.Name = "SupportPart"
+    supportPart.Parent = workspace
+end
 
 local function teleportLoop(hrp, targetPos, duration, interval)
     local repetitions = math.floor(duration / interval)
@@ -21,6 +37,10 @@ local function onCharacterAdded(character)
         spawn(function()
             teleportLoop(hrp, respawnPosition, 1, 0.2)
             respawnPosition = nil
+            if supportPart then
+                supportPart:Destroy()
+                supportPart = nil
+            end
         end)
     end
 
@@ -36,13 +56,14 @@ local function onCharacterAdded(character)
     humanoid.HealthChanged:Connect(function(health)
         if health <= 10 and health > 0 then
             local pos = hrp.Position
-            respawnPosition = Vector3.new(pos.X, pos.y, pos.Z)
+            respawnPosition = Vector3.new(pos.X, pos.Y, pos.Z)
             local tool = character:FindFirstChildOfClass("Tool")
             if tool then
                 heldToolName = tool.Name
             else
                 heldToolName = nil
             end
+            createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))
             hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
         end
     end)
