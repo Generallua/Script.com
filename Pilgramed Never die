@@ -64,10 +64,6 @@ if player.Character then
 end
 player.CharacterAdded:Connect(onCharacterAdded)
 
-
-print("godmode")
-
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local toolName = nil
