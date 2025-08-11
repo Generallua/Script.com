@@ -15,7 +15,7 @@ local function createSupportPart(position)
     supportPart.Anchored = true
     supportPart.CanCollide = true
     supportPart.Position = position + Vector3.new(0, 0.5, 0)
-    supportPart.Transparency = 0.3
+    supportPart.Transparency = 0
     supportPart.BrickColor = BrickColor.new("Bright yellow")
     supportPart.Name = "SupportPart"
     supportPart.Parent = workspace
