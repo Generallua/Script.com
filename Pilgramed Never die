@@ -3,8 +3,8 @@ local player = Players.LocalPlayer
 
 local teleportY = -3965
 local respawnPosition = nil
-local heldToolName = nil
 local supportPart = nil
+local healthChangedConnection = nil
 
 local function createSupportPart(position)
     if supportPart then
@@ -44,25 +44,15 @@ local function onCharacterAdded(character)
         end)
     end
 
-    if heldToolName then
-        local backpack = player:WaitForChild("Backpack")
-        local tool = backpack:FindFirstChild(heldToolName)
-        if tool then
-            tool.Parent = character
-        end
-        heldToolName = nil
+    if healthChangedConnection then
+        healthChangedConnection:Disconnect()
+        healthChangedConnection = nil
     end
 
-    humanoid.HealthChanged:Connect(function(health)
+    healthChangedConnection = humanoid.HealthChanged:Connect(function(health)
         if health <= 10 and health > 0 then
             local pos = hrp.Position
             respawnPosition = Vector3.new(pos.X, pos.Y, pos.Z)
-            local tool = character:FindFirstChildOfClass("Tool")
-            if tool then
-                heldToolName = tool.Name
-            else
-                heldToolName = nil
-            end
             createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))
             hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
         end
