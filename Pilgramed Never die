@@ -1,0 +1,54 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local teleportY = -3965
+local respawnPosition = nil
+local heldToolName = nil
+
+local function teleportLoop(hrp, targetPos, duration, interval)
+    local repetitions = math.floor(duration / interval)
+    for i = 1, repetitions do
+        hrp.CFrame = CFrame.new(targetPos)
+        wait(interval)
+    end
+end
+
+local function onCharacterAdded(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    if respawnPosition then
+        spawn(function()
+            teleportLoop(hrp, respawnPosition, 1, 0.2)
+            respawnPosition = nil
+        end)
+    end
+
+    if heldToolName then
+        local backpack = player:WaitForChild("Backpack")
+        local tool = backpack:FindFirstChild(heldToolName)
+        if tool then
+            tool.Parent = character
+        end
+        heldToolName = nil
+    end
+
+    humanoid.HealthChanged:Connect(function(health)
+        if health <= 10 and health > 0 then
+            local pos = hrp.Position
+            respawnPosition = Vector3.new(pos.X, pos.y, pos.Z)
+            local tool = character:FindFirstChildOfClass("Tool")
+            if tool then
+                heldToolName = tool.Name
+            else
+                heldToolName = nil
+            end
+            hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
+        end
+    end)
+end
+
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+player.CharacterAdded:Connect(onCharacterAdded)
