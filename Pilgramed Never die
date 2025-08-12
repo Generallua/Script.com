@@ -1,9 +1,3 @@
-_G.test2 = true
-while _G.test2 do
-    game:GetService("ReplicatedStorage").Remotes.Block:FireServer(true)
-    task.wait(0)
-end
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
