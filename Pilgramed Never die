@@ -1,10 +1,39 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
+local THRESHOLD = 10
+local VISIBLE_ALPHA = 0.1
+local HIDE_ALPHA = 1
+
 local teleportY = -3800
 local respawnPosition
 local supportPart
 local healthChangedConnection
+
+local function ensureOverlay()
+    local playerGui = player:WaitForChild("PlayerGui")
+    local screenGui = playerGui:FindFirstChild("LowHealthGui")
+    if not screenGui then
+        screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "LowHealthGui"
+        screenGui.ResetOnSpawn = false
+        screenGui.Parent = playerGui
+    end
+    local overlay = screenGui:FindFirstChild("LowHealthOverlay")
+    if not overlay then
+        overlay = Instance.new("Frame")
+        overlay.Name = "LowHealthOverlay"
+        overlay.Size = UDim2.new(1,0,1,0)
+        overlay.Position = UDim2.new(0,0,0,0)
+        overlay.BackgroundColor3 = Color3.fromRGB(255,255,255)
+        overlay.BackgroundTransparency = HIDE_ALPHA
+        overlay.ZIndex = 10
+        overlay.Parent = screenGui
+    end
+    return overlay
+end
+
+local overlay = ensureOverlay()
 
 local function createSupportPart(position)
     if not supportPart then
@@ -22,7 +51,7 @@ end
 
 local function teleportLoop(hrp, targetPos, duration, interval)
     local repetitions = math.floor(duration / interval)
-    for i = 1, repetitions do
+    for _ = 1, repetitions do
         hrp.CFrame = CFrame.new(targetPos)
         task.wait(interval)
     end
@@ -31,7 +60,6 @@ end
 local function onCharacterAdded(character)
     local humanoid = character:WaitForChild("Humanoid")
     local hrp = character:WaitForChild("HumanoidRootPart")
-
     if respawnPosition then
         teleportLoop(hrp, respawnPosition, 1, 0.1)
         respawnPosition = nil
@@ -40,17 +68,27 @@ local function onCharacterAdded(character)
             supportPart = nil
         end
     end
-
-    if healthChangedConnection then
-        healthChangedConnection:Disconnect()
-    end
-
-    healthChangedConnection = humanoid.HealthChanged:Connect(function(health)
-        if health <= 10 and health > 0 then
+    local function onHealthChanged(hp)
+        if hp <= THRESHOLD and hp > 0 then
+            overlay.BackgroundTransparency = VISIBLE_ALPHA
             local pos = hrp.Position
             respawnPosition = pos
             createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))
             hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
+        else
+            overlay.BackgroundTransparency = HIDE_ALPHA
+        end
+    end
+    onHealthChanged(humanoid.Health)
+    if healthChangedConnection then
+        healthChangedConnection:Disconnect()
+    end
+    healthChangedConnection = humanoid.HealthChanged:Connect(onHealthChanged)
+    humanoid.Died:Connect(function()
+        overlay.BackgroundTransparency = HIDE_ALPHA
+        if healthChangedConnection then
+            healthChangedConnection:Disconnect()
+            healthChangedConnection = nil
         end
     end)
 end
@@ -58,6 +96,4 @@ end
 if player.Character then
     onCharacterAdded(player.Character)
 end
-player.CharacterAdded:Connect(onCharacterAdded)
-
-print("godmode")
+player.CharacterAdded:Connect(onCharacterAddedloadednt("godmode true)
