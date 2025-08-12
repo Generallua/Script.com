@@ -96,4 +96,6 @@ end
 if player.Character then
     onCharacterAdded(player.Character)
 end
-player.CharacterAdded:Connect(onCharacterAddedloadednt("godmode true)
+player.CharacterAdded:Connect(onCharacterAdded)
+
+print("aka Pitikon")
