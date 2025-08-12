@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
-local teleportY = -3850
+local teleportY = -3800
 local respawnPosition = nil
 local supportPart = nil
 local healthChangedConnection = nil
