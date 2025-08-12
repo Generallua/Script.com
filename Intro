@@ -1,0 +1,100 @@
+local player = game.Players.LocalPlayer
+local blurEffect = Instance.new("BlurEffect")
+blurEffect.Size = 0
+blurEffect.Parent = game.Lighting
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player.PlayerGui
+
+local imageLabel = Instance.new("ImageLabel")
+imageLabel.Parent = screenGui
+imageLabel.Size = UDim2.new(0, 100, 0, 100)
+imageLabel.Position = UDim2.new(0.5, -50, 0.25, 0)
+imageLabel.Image = "rbxassetid://72396641030442"
+imageLabel.BackgroundTransparency = 1
+imageLabel.ImageTransparency = 1
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.Parent = imageLabel
+uiCorner.CornerRadius = UDim.new(0, 50)
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Parent = screenGui
+textLabel.Text = "General lua"
+textLabel.Size = UDim2.new(0, 300, 0, 50)
+textLabel.Position = UDim2.new(0.5, -150, 0.5, -25)
+textLabel.TextSize = 25
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.BackgroundTransparency = 1
+textLabel.TextTransparency = 1
+
+local text = "General lua"
+local textLength = #text
+local letters = {}
+
+for i = 1, textLength do
+    local letter = Instance.new("TextLabel")
+    letter.Parent = textLabel
+    letter.Text = text:sub(i, i)
+    letter.Size = UDim2.new(0, 30, 0, 50)
+
+    local positionX = (i - 1) * 30
+    if i > 7 then
+        positionX = (i - 1) * 25
+    end
+    letter.Position = UDim2.new(0, positionX, 0, 0)
+
+    letter.TextSize = 30
+    letter.TextColor3 = Color3.fromRGB(255, 255, 255)
+    letter.BackgroundTransparency = 1
+    letter.TextTransparency = 1
+
+    table.insert(letters, letter)
+end
+
+coroutine.wrap(function()
+    for i = 0, 24, 1 do
+        blurEffect.Size = i
+        wait(0.1)
+    end
+
+    wait(1)
+
+    for i = 24, 0, -1 do
+        blurEffect.Size = i
+        wait(0.1)
+    end
+
+    blurEffect:Destroy()
+end)()
+
+for i = 1, #letters do
+    local letter = letters[i]
+    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear)
+    local goal = {TextTransparency = 0}
+    local tween = game:GetService("TweenService"):Create(letter, tweenInfo, goal)
+    tween:Play()
+    wait(0.1)
+end
+
+local imageTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+local imageGoal = {ImageTransparency = 0}
+local imageTween = game:GetService("TweenService"):Create(imageLabel, imageTweenInfo, imageGoal)
+imageTween:Play()
+
+wait(2)
+
+for i = 1, #letters do
+    local letter = letters[i]
+    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear)
+    local goal = {TextTransparency = 1}
+    local tween = game:GetService("TweenService"):Create(letter, tweenInfo, goal)
+    tween:Play()
+    wait(0.1)
+end
+
+local imageFadeOutTween = game:GetService("TweenService"):Create(imageLabel, imageTweenInfo, {ImageTransparency = 1})
+imageFadeOutTween:Play()
+
+wait(0.2)
+screenGui:Remove()
