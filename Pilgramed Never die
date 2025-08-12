@@ -1,69 +1,101 @@
-_G.test2 = true
-while _G.test2 do
-    game:GetService("ReplicatedStorage").Remotes.Block:FireServer(true)
-    task.wait(0.005)
+local RunService = game:GetService("RunService")
+
+local initialFPS = 60  -- ตั้งค่าคร่าว ๆ ไว้ก่อนเก็บจริงตอนเริ่ม
+local fpsSampleTime = 1 -- วัด FPS เฉลี่ยใน 1 วิ
+
+-- ฟังก์ชันวัด FPS เฉลี่ย
+local function getAverageFPS(duration)
+    local count = 0
+    local sumDelta = 0
+    local startTime = tick()
+    while tick() - startTime < duration do
+        local dt = RunService.RenderStepped:Wait()
+        sumDelta = sumDelta + dt
+        count = count + 1
+    end
+    if count == 0 then return 60 end
+    return 1 / (sumDelta / count)
+end
+
+initialFPS = getAverageFPS(fpsSampleTime)
+
+_G.test2 = true    
+while _G.test2 do    
+    local currentFPS = getAverageFPS(0.1)  -- วัด FPS ช่วงสั้น ๆ เพื่อเช็ค
+    if initialFPS - currentFPS > 15 then
+        task.wait(0.1) -- ถ้า FPS ลดลงเกิน 15 พัก 0.1 วิ
+    else
+        game:GetService("ReplicatedStorage").Remotes.Block:FireServer(true)    
+        task.wait(0.005)
+    end
 end
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
 local teleportY = -3800
-local respawnPosition
-local supportPart
-local healthChangedConnection
+local respawnPosition = nil
+local supportPart = nil
+local healthChangedConnection = nil
 
 local function createSupportPart(position)
-    if not supportPart then
-        supportPart = Instance.new("Part")
-        supportPart.Size = Vector3.new(10, 1, 10)
-        supportPart.Anchored = true
-        supportPart.CanCollide = true
-        supportPart.Transparency = 0.9
-        supportPart.BrickColor = BrickColor.new("Bright yellow")
-        supportPart.Name = "SupportPart"
-        supportPart.Parent = workspace
-    end
-    supportPart.Position = position + Vector3.new(0, 0.5, 0)
+if supportPart then
+supportPart:Destroy()
+end
+supportPart = Instance.new("Part")
+supportPart.Size = Vector3.new(10, 1, 10)
+supportPart.Anchored = true
+supportPart.CanCollide = true
+supportPart.Position = position + Vector3.new(0, 0.5, 0)
+supportPart.Transparency = 0.9
+supportPart.BrickColor = BrickColor.new("Bright yellow")
+supportPart.Name = "SupportPart"
+supportPart.Parent = workspace
 end
 
 local function teleportLoop(hrp, targetPos, duration, interval)
-    local repetitions = math.floor(duration / interval)
-    for i = 1, repetitions do
-        hrp.CFrame = CFrame.new(targetPos)
-        task.wait(interval)
-    end
+local repetitions = math.floor(duration / interval)
+for i = 1, repetitions do
+hrp.CFrame = CFrame.new(targetPos)
+wait(interval)
+end
 end
 
 local function onCharacterAdded(character)
-    local humanoid = character:WaitForChild("Humanoid")
-    local hrp = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+local hrp = character:WaitForChild("HumanoidRootPart")
 
-    if respawnPosition then
-        teleportLoop(hrp, respawnPosition, 1, 0.1)
-        respawnPosition = nil
-        if supportPart then
-            supportPart:Destroy()
-            supportPart = nil
-        end
-    end
+if respawnPosition then    
+    spawn(function()    
+        teleportLoop(hrp, respawnPosition, 1, 0.2)    
+        respawnPosition = nil    
+        if supportPart then    
+            supportPart:Destroy()    
+            supportPart = nil    
+        end    
+    end)    
+end    
 
-    if healthChangedConnection then
-        healthChangedConnection:Disconnect()
-    end
+if healthChangedConnection then    
+    healthChangedConnection:Disconnect()    
+    healthChangedConnection = nil    
+end    
 
-    healthChangedConnection = humanoid.HealthChanged:Connect(function(health)
-        if health <= 10 and health > 0 then
-            local pos = hrp.Position
-            respawnPosition = pos
-            createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))
-            hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
-        end
-    end)
+healthChangedConnection = humanoid.HealthChanged:Connect(function(health)    
+    if health <= 10 and health > 0 then    
+        local pos = hrp.Position    
+        respawnPosition = Vector3.new(pos.X, pos.Y, pos.Z)    
+        createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))    
+        hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)    
+    end    
+end)
+
 end
 
 if player.Character then
-    onCharacterAdded(player.Character)
+onCharacterAdded(player.Character)
 end
 player.CharacterAdded:Connect(onCharacterAdded)
 
 print("godmode")
+
