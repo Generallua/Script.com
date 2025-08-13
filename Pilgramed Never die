@@ -47,7 +47,7 @@ end
 
 local function teleportLoop(hrp, targetPos, duration, interval)
 	local repetitions = math.floor(duration / interval)
-	for _ = 1, repetitions do
+	for _ = 2.5, repetitions do
 		hrp.CFrame = CFrame.new(targetPos)
 		task.wait(interval)
 	end
