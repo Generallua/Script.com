@@ -1,100 +1,97 @@
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 local THRESHOLD = 10
-local VISIBLE_ALPHA = 0.1
-local HIDE_ALPHA = 1
 
 local teleportY = -3800
 local respawnPosition
 local supportPart
 local healthChangedConnection
+local frozen = false
+local rsConn, healthConn
 
-local function ensureOverlay()
-    local playerGui = player:WaitForChild("PlayerGui")
-    local screenGui = playerGui:FindFirstChild("LowHealthGui")
-    if not screenGui then
-        screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "LowHealthGui"
-        screenGui.ResetOnSpawn = false
-        screenGui.Parent = playerGui
-    end
-    local overlay = screenGui:FindFirstChild("LowHealthOverlay")
-    if not overlay then
-        overlay = Instance.new("Frame")
-        overlay.Name = "LowHealthOverlay"
-        overlay.Size = UDim2.new(1,0,1,0)
-        overlay.Position = UDim2.new(0,0,0,0)
-        overlay.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        overlay.BackgroundTransparency = HIDE_ALPHA
-        overlay.ZIndex = 10
-        overlay.Parent = screenGui
-    end
-    return overlay
+local function freeze()
+	if frozen then return end
+	frozen = true
+	local cf = camera.CFrame
+	camera.CameraType = Enum.CameraType.Scriptable
+	UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
+	rsConn = RunService.RenderStepped:Connect(function()
+		camera.CFrame = cf
+	end)
 end
 
-local overlay = ensureOverlay()
+local function unfreeze()
+	if rsConn then rsConn:Disconnect() rsConn = nil end
+	frozen = false
+	UIS.MouseBehavior = Enum.MouseBehavior.Default
+	camera.CameraType = Enum.CameraType.Custom
+end
 
 local function createSupportPart(position)
-    if not supportPart then
-        supportPart = Instance.new("Part")
-        supportPart.Size = Vector3.new(10, 1, 10)
-        supportPart.Anchored = true
-        supportPart.CanCollide = true
-        supportPart.Transparency = 0.9
-        supportPart.BrickColor = BrickColor.new("Bright yellow")
-        supportPart.Name = "SupportPart"
-        supportPart.Parent = workspace
-    end
-    supportPart.Position = position + Vector3.new(0, 0.5, 0)
+	if not supportPart then
+		supportPart = Instance.new("Part")
+		supportPart.Size = Vector3.new(10, 1, 10)
+		supportPart.Anchored = true
+		supportPart.CanCollide = true
+		supportPart.Transparency = 0.9
+		supportPart.BrickColor = BrickColor.new("Bright yellow")
+		supportPart.Name = "SupportPart"
+		supportPart.Parent = workspace
+	end
+	supportPart.Position = position + Vector3.new(0, 0.5, 0)
 end
 
 local function teleportLoop(hrp, targetPos, duration, interval)
-    local repetitions = math.floor(duration / interval)
-    for _ = 1, repetitions do
-        hrp.CFrame = CFrame.new(targetPos)
-        task.wait(interval)
-    end
+	local repetitions = math.floor(duration / interval)
+	for _ = 1, repetitions do
+		hrp.CFrame = CFrame.new(targetPos)
+		task.wait(interval)
+	end
+end
+
+local function onHealthChanged(hp, hrp)
+	if hp <= THRESHOLD and hp > 0 then
+		freeze()
+		local pos = hrp.Position
+		respawnPosition = pos
+		createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))
+		hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
+	end
 end
 
 local function onCharacterAdded(character)
-    local humanoid = character:WaitForChild("Humanoid")
-    local hrp = character:WaitForChild("HumanoidRootPart")
-    if respawnPosition then
-        teleportLoop(hrp, respawnPosition, 1, 0.1)
-        respawnPosition = nil
-        if supportPart then
-            supportPart:Destroy()
-            supportPart = nil
-        end
-    end
-    local function onHealthChanged(hp)
-        if hp <= THRESHOLD and hp > 0 then
-            overlay.BackgroundTransparency = VISIBLE_ALPHA
-            local pos = hrp.Position
-            respawnPosition = pos
-            createSupportPart(Vector3.new(pos.X, teleportY, pos.Z))
-            hrp.CFrame = CFrame.new(pos.X, teleportY, pos.Z)
-        else
-            overlay.BackgroundTransparency = HIDE_ALPHA
-        end
-    end
-    onHealthChanged(humanoid.Health)
-    if healthChangedConnection then
-        healthChangedConnection:Disconnect()
-    end
-    healthChangedConnection = humanoid.HealthChanged:Connect(onHealthChanged)
-    humanoid.Died:Connect(function()
-        overlay.BackgroundTransparency = HIDE_ALPHA
-        if healthChangedConnection then
-            healthChangedConnection:Disconnect()
-            healthChangedConnection = nil
-        end
-    end)
+	unfreeze()
+	local humanoid = character:WaitForChild("Humanoid")
+	local hrp = character:WaitForChild("HumanoidRootPart")
+	if respawnPosition then
+		teleportLoop(hrp, respawnPosition, 1, 0.1)
+		respawnPosition = nil
+		if supportPart then
+			supportPart:Destroy()
+			supportPart = nil
+		end
+	end
+	if healthChangedConnection then
+		healthChangedConnection:Disconnect()
+	end
+	healthChangedConnection = humanoid.HealthChanged:Connect(function(hp)
+		onHealthChanged(hp, hrp)
+	end)
+	humanoid.Died:Connect(function()
+		unfreeze()
+		if healthChangedConnection then
+			healthChangedConnection:Disconnect()
+			healthChangedConnection = nil
+		end
+	end)
 end
 
 if player.Character then
-    onCharacterAdded(player.Character)
+	onCharacterAdded(player.Character)
 end
 player.CharacterAdded:Connect(onCharacterAdded)
 
