@@ -75,7 +75,7 @@ textbox.FocusLost:Connect(function(enterPressed)
 end)
 
 local buttonRows = {}
-local buttonNames = {{"🚫 ไม่เล็งหากมีสิ่งกีดขวาง","👥 ไม่เล็งทีมเดียวกัน"},{"💀 ไม่เล็งคนเลือด 0","🤝 ไม่เล็งเพื่อน"}}
+local buttonNames = {{"🚫 ไม่เล็งหากมีสิ่งกีดขวาง","👥 ไม่เล็งคนเลือด"},{"💀 ไม่เล็งคนเลือด 0","🤝 ไม่เล็งเพื่อน"}}
 local toggleStates = {{ignoreObstruction},{ignoreSameTeam},{ignoreZeroHealth},{ignoreFriends}}
 local callbacks = {
     function(v) ignoreObstruction=v end,
@@ -100,12 +100,12 @@ for i,rowNames in ipairs(buttonNames) do
         b.Size = UDim2.new(0.5,-4,1,0)
         b.BackgroundColor3 = Color3.fromRGB(150,111,51)
         b.TextColor3 = Color3.fromRGB(255,255,255)
-        b.Text = name .. (toggleStates[idx][1] and ": ✅" or ": ❌")
+        b.Text = name .. (toggleStates[idx][1] and ": 1" or ": 0")
         Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
 
         b.MouseButton1Click:Connect(function()
             toggleStates[idx][1] = not toggleStates[idx][1]
-            b.Text = name .. (toggleStates[idx][1] and ": ✅" or ": ❌")
+            b.Text = name .. (toggleStates[idx][1] and ": 1" or ": 0")
             callbacks[idx](toggleStates[idx][1])
             b.BackgroundColor3 = toggleStates[idx][1] and Color3.fromRGB(200,150,100) or Color3.fromRGB(150,111,51)
         end)
@@ -130,7 +130,7 @@ minusBtn.Size = UDim2.new(0,60,1,0)
 Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0,6)
 
 local button5 = Instance.new("TextButton", row5)
-button5.Text = "🎯 เปิดระบบ"
+button5.Text = "O"
 button5.BackgroundColor3 = Color3.fromRGB(150,111,51)
 button5.TextColor3 = Color3.fromRGB(255,255,255)
 button5.Size = UDim2.new(0,120,1,0)
