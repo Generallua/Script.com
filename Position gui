@@ -1,0 +1,202 @@
+local player = game:GetService("Players").LocalPlayer    
+local UIS = game:GetService("UserInputService")    
+local camera = workspace.CurrentCamera    
+
+local existingGui = player:FindFirstChild("PlayerGui"):FindFirstChild("FiveButtonsGUI")
+if existingGui then
+    existingGui:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")    
+screenGui.Name = "FiveButtonsGUI"    
+screenGui.ResetOnSpawn = false    
+screenGui.Parent = player:WaitForChild("PlayerGui")    
+
+local container = Instance.new("Frame")    
+container.Name = "Container"    
+container.Size = UDim2.new(0, 280, 0, 180)    
+container.Position = UDim2.new(0, 10, 0, 10)    
+container.BackgroundColor3 = Color3.fromRGB(38, 38, 38)    
+container.Active = true    
+container.Parent = screenGui    
+
+local corner = Instance.new("UICorner")    
+corner.CornerRadius = UDim.new(0, 12)    
+corner.Parent = container    
+
+local padding = Instance.new("UIPadding")    
+padding.PaddingTop = UDim.new(0, 10)    
+padding.PaddingBottom = UDim.new(0, 10)    
+padding.PaddingLeft = UDim.new(0, 10)    
+padding.PaddingRight = UDim.new(0, 10)    
+padding.Parent = container    
+
+local layout = Instance.new("UIListLayout")    
+layout.FillDirection = Enum.FillDirection.Vertical    
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center    
+layout.VerticalAlignment = Enum.VerticalAlignment.Top    
+layout.Padding = UDim.new(0, 8)    
+layout.SortOrder = Enum.SortOrder.LayoutOrder    
+layout.Parent = container    
+
+local toggleBtn = Instance.new("TextButton")    
+toggleBtn.Size = UDim2.new(0, 30, 0, 30)    
+toggleBtn.Position = UDim2.new(0, 5, 0, 5)    
+toggleBtn.AnchorPoint = Vector2.new(0,0)    
+toggleBtn.Text = "<"    
+toggleBtn.BackgroundColor3 = Color3.fromRGB(26, 26, 26)    
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)    
+toggleBtn.ZIndex = 2    
+toggleBtn.Parent = container    
+
+local toggleCorner = Instance.new("UICorner")    
+toggleCorner.CornerRadius = UDim.new(0,6)    
+toggleCorner.Parent = toggleBtn    
+
+local textbox = Instance.new("TextBox")  
+textbox.Name = "Input"  
+textbox.Size = UDim2.new(1,0,0,36)  
+textbox.ClearTextOnFocus = false  
+textbox.PlaceholderText = "Position..."  
+textbox.Text = ""  
+textbox.LayoutOrder = 0  
+textbox.TextEditable = false  
+textbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)  
+textbox.TextColor3 = Color3.fromRGB(255,255,255)  
+textbox.Parent = container  
+
+local tbCorner = Instance.new("UICorner")  
+tbCorner.CornerRadius = UDim.new(0,8)  
+tbCorner.Parent = textbox  
+
+local buttonRows = {}    
+local function makeButtonRow(buttonTexts, callbacks)    
+    local row = Instance.new("Frame")    
+    row.Size = UDim2.new(1,0,0,36)    
+    row.BackgroundTransparency = 1    
+    row.Parent = container    
+
+    local rowLayout = Instance.new("UIListLayout")    
+    rowLayout.FillDirection = Enum.FillDirection.Horizontal    
+    rowLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center    
+    rowLayout.Padding = UDim.new(0,8)    
+    rowLayout.Parent = row    
+
+    for i, text in ipairs(buttonTexts) do    
+        local b = Instance.new("TextButton")    
+        b.Text = text    
+        b.BackgroundColor3 = Color3.fromRGB(102, 0, 0)    
+        b.TextColor3 = Color3.fromRGB(255,255,255)    
+        b.Parent = row    
+
+        local c = Instance.new("UICorner")    
+        c.CornerRadius = UDim.new(0,8)    
+        c.Parent = b    
+
+        b.Size = UDim2.new(0.5,-4,1,0)    
+
+        if callbacks and callbacks[i] then
+            b.MouseButton1Click:Connect(callbacks[i])
+        end
+    end    
+
+    table.insert(buttonRows,row)    
+end    
+
+local funcs = {
+    function() local plr = game.Players.LocalPlayer
+if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+    setclipboard(tostring(plr.Character.HumanoidRootPart.Position))
+end end,
+    function() local plr = game.Players.LocalPlayer
+if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+    setclipboard(tostring(plr.Character.HumanoidRootPart.CFrame))
+end end,
+    function() local plr = game.Players.LocalPlayer
+if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+    local pos = plr.Character.HumanoidRootPart.Position
+    local warpScript = "game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(" 
+                       .. pos.X .. ", " .. pos.Y .. ", " .. pos.Z .. ")"
+    setclipboard(warpScript)
+end end,
+    function() local plr = game.Players.LocalPlayer
+if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+    local cf = plr.Character.HumanoidRootPart.CFrame
+    local cfTable = {cf:GetComponents()}
+    local warpScript = "game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(" ..
+                       table.concat(cfTable, ", ") .. ")"
+    setclipboard(warpScript)
+end end
+}
+
+makeButtonRow({"Position","CFrame"}, {funcs[1], funcs[2]})
+makeButtonRow({"Tp Position","Tp CFrame"}, {funcs[3], funcs[4]})
+
+local minimized = false    
+toggleBtn.MouseButton1Click:Connect(function()    
+    minimized = not minimized    
+    toggleBtn.Text = minimized and ">" or "<"    
+
+    textbox.Visible = not minimized    
+    for _, row in ipairs(buttonRows) do    
+        row.Visible = not minimized    
+    end    
+
+    if minimized then    
+        container.Size = UDim2.new(0,60,0,50)    
+    else    
+        container.Size = UDim2.new(0,280,0,180)    
+    end    
+end)    
+
+game:GetService("RunService").RenderStepped:Connect(function()  
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")  
+    if hrp then  
+        local x = math.floor(hrp.Position.X)  
+        local y = math.floor(hrp.Position.Y)  
+        local z = math.floor(hrp.Position.Z)  
+        textbox.Text = "X: "..x.." Y: "..y.." Z: "..z  
+    end  
+end)    
+
+local dragging = false    
+local dragInput, dragStart, startPos    
+
+local function clamp(value, min, max)    
+    if value < min then return min end    
+    if value > max then return max end    
+    return value    
+end    
+
+local function update(input)    
+    local delta = input.Position - dragStart    
+    local newX = clamp(startPos.X.Offset + delta.X, 0, camera.ViewportSize.X - container.AbsoluteSize.X)    
+    local newY = clamp(startPos.Y.Offset + delta.Y, 0, camera.ViewportSize.Y - container.AbsoluteSize.Y)    
+    container.Position = UDim2.new(0, newX, 0, newY)    
+end    
+
+container.InputBegan:Connect(function(input)    
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then    
+        dragging = true    
+        dragStart = input.Position    
+        startPos = container.Position    
+
+        input.Changed:Connect(function()    
+            if input.UserInputState == Enum.UserInputState.End then    
+                dragging = false    
+            end    
+        end)    
+    end    
+end)    
+
+container.InputChanged:Connect(function(input)    
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then    
+        dragInput = input    
+    end    
+end)    
+
+UIS.InputChanged:Connect(function(input)    
+    if dragging and input == dragInput then    
+        update(input)    
+    end    
+end)
