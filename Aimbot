@@ -5,6 +5,13 @@ local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
+-- ลบ GUI เดิมก่อนสร้างใหม่
+local existingGui = LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("FiveButtonsGUI")
+if existingGui then
+    existingGui:Destroy()
+end
+
+-- ตัวแปร
 local ignoreObstruction = false
 local ignoreSameTeam = false
 local ignoreZeroHealth = false
@@ -12,6 +19,7 @@ local ignoreFriends = false
 local enabled = false
 local circleRadius = 100
 
+-- วงกลมสำหรับ Aimbot
 local circle = Drawing.new("Circle")
 circle.Visible = false
 circle.Color = Color3.fromRGB(255,255,255)
@@ -19,6 +27,7 @@ circle.Thickness = 2
 circle.Filled = false
 circle.Radius = circleRadius
 
+-- สร้าง GUI
 local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 screenGui.Name = "FiveButtonsGUI"
 screenGui.ResetOnSpawn = false
@@ -45,6 +54,7 @@ layout.VerticalAlignment = Enum.VerticalAlignment.Top
 layout.Padding = UDim.new(0,8)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 
+-- ปุ่มย่อ/ขยาย
 local toggleBtn = Instance.new("TextButton", container)
 toggleBtn.Size = UDim2.new(0,30,0,30)
 toggleBtn.Position = UDim2.new(0,5,0,5)
@@ -54,6 +64,7 @@ toggleBtn.BackgroundColor3 = Color3.fromRGB(90,0,0)
 toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,6)
 
+-- TextBox รัศมี
 local textbox = Instance.new("TextBox", container)
 textbox.Size = UDim2.new(1,0,0,36)
 textbox.ClearTextOnFocus = false
@@ -74,6 +85,7 @@ textbox.FocusLost:Connect(function(enterPressed)
     end
 end)
 
+-- ปุ่มตั้งค่า Aimbot
 local buttonRows = {}
 local buttonNames = {{"🚫 ไม่เล็งหากมีสิ่งกีดขวาง","👥 ไม่เล็งคนเลือด"},{"💀 ไม่เล็งคนเลือด 0","🤝 ไม่เล็งเพื่อน"}}
 local toggleStates = {{ignoreObstruction},{ignoreSameTeam},{ignoreZeroHealth},{ignoreFriends}}
@@ -113,6 +125,7 @@ for i,rowNames in ipairs(buttonNames) do
     table.insert(buttonRows,row)
 end
 
+-- แถวปุ่ม +, -, O
 local row5 = Instance.new("Frame", container)
 row5.Size = UDim2.new(1,0,0,36)
 row5.BackgroundTransparency = 1
@@ -143,6 +156,7 @@ plusBtn.TextColor3 = Color3.fromRGB(255,255,255)
 plusBtn.Size = UDim2.new(0,60,1,0)
 Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0,6)
 
+-- ฟังก์ชันปุ่ม
 button5.MouseButton1Click:Connect(function()
     enabled = not enabled
     circle.Visible = enabled
@@ -158,6 +172,7 @@ plusBtn.MouseButton1Click:Connect(function()
     textbox.Text = tostring(circleRadius)
 end)
 
+-- ย่อ/ขยาย GUI
 local minimized = false
 toggleBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
@@ -176,6 +191,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ลาก GUI
 local dragging, dragInput, dragStart, startPos
 local function update(input)
     local delta = input.Position - dragStart
@@ -205,6 +221,7 @@ UIS.InputChanged:Connect(function(input)
     if dragging and input==dragInput then update(input) end
 end)
 
+-- ฟังก์ชันตรวจสอบสามารถเล็งได้
 local function canAimAt(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") or not player.Character:FindFirstChild("Humanoid") then return false end
     if player==LocalPlayer then return false end
@@ -223,6 +240,7 @@ local function canAimAt(player)
     return true
 end
 
+-- RenderStepped Aimbot
 RunService.RenderStepped:Connect(function()
     circle.Position = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y/2)
     circle.Radius = circleRadius
