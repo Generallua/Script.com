@@ -1,6 +1,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
@@ -9,260 +9,244 @@ local ignoreObstruction = false
 local ignoreSameTeam = false
 local ignoreZeroHealth = false
 local ignoreFriends = false
-local prioritizeHoldingTool = false
-local aimOnlyHoldingTool = false -- เพิ่มตัวแปรใหม่
 local enabled = false
 local circleRadius = 100
 
 local circle = Drawing.new("Circle")
 circle.Visible = false
-circle.Color = Color3.fromRGB(255, 255, 255)
+circle.Color = Color3.fromRGB(255,255,255)
 circle.Thickness = 2
 circle.Filled = false
 circle.Radius = circleRadius
 
-local screenGui = Instance.new("ScreenGui", game.CoreGui)
-screenGui.Name = "AimSettingsGui"
+local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+screenGui.Name = "FiveButtonsGUI"
 screenGui.ResetOnSpawn = false
 
-local frame = Instance.new("Frame", screenGui)
-frame.Size = UDim2.new(0, 260, 0, 350) -- ปรับสูงขึ้นเล็กน้อย
-frame.Position = UDim2.new(0, 20, 0.5, -170)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BorderSizePixel = 0
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 9)
+local container = Instance.new("Frame")
+container.Name = "Container"
+container.Size = UDim2.new(0,280,0,230)
+container.Position = UDim2.new(0,10,0,10)
+container.BackgroundColor3 = Color3.fromRGB(128,0,0)
+container.Active = true
+container.Parent = screenGui
+Instance.new("UICorner", container).CornerRadius = UDim.new(0,12)
 
-local UIListLayout = Instance.new("UIListLayout", frame)
-UIListLayout.Padding = UDim.new(0, 9)
-UIListLayout.FillDirection = Enum.FillDirection.Vertical
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local padding = Instance.new("UIPadding", container)
+padding.PaddingTop = UDim.new(0,10)
+padding.PaddingBottom = UDim.new(0,10)
+padding.PaddingLeft = UDim.new(0,10)
+padding.PaddingRight = UDim.new(0,10)
 
-local function createToggle(text, default, callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.9, 0, 0, 27)
-    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    btn.BorderSizePixel = 0
-    btn.Font = Enum.Font.SourceSansSemibold
-    btn.TextSize = 13.5
-    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
-    btn.AutoButtonColor = false
-    btn.Text = text .. ": " .. (default and "✅" or "❌")
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 7)
+local layout = Instance.new("UIListLayout", container)
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
+layout.Padding = UDim.new(0,8)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local enabledToggle = default
-    btn.MouseButton1Click:Connect(function()
-        enabledToggle = not enabledToggle
-        btn.Text = text .. ": " .. (enabledToggle and "✅" or "❌")
-        callback(enabledToggle)
-    end)
-    return btn
-end
+local toggleBtn = Instance.new("TextButton", container)
+toggleBtn.Size = UDim2.new(0,30,0,30)
+toggleBtn.Position = UDim2.new(0,5,0,5)
+toggleBtn.AnchorPoint = Vector2.new(0,0)
+toggleBtn.Text = "<"
+toggleBtn.BackgroundColor3 = Color3.fromRGB(90,0,0)
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,6)
 
-local function createLabeledTextbox(labelText, placeholder, defaultValue, callback)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(0.9, 0, 0, 45)
-    container.BackgroundTransparency = 1
-
-    local label = Instance.new("TextLabel", container)
-    label.Size = UDim2.new(1, 0, 0, 18)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.SourceSansSemibold
-    label.TextSize = 12.75
-    label.TextColor3 = Color3.fromRGB(255, 255, 255)
-    label.Text = labelText
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local textbox = Instance.new("TextBox", container)
-    textbox.Size = UDim2.new(1, 0, 0, 23)
-    textbox.Position = UDim2.new(0, 0, 0, 2)
-    textbox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    textbox.Font = Enum.Font.SourceSans
-    textbox.TextSize = 12.75
-    textbox.PlaceholderText = placeholder
-    textbox.Text = tostring(defaultValue)
-    textbox.ClearTextOnFocus = false
-    textbox.TextXAlignment = Enum.TextXAlignment.Center
-    Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 6)
-
-    textbox.FocusLost:Connect(function(enterPressed)
-        if enterPressed then
-            callback(textbox.Text)
+local textbox = Instance.new("TextBox", container)
+textbox.Size = UDim2.new(1,0,0,36)
+textbox.ClearTextOnFocus = false
+textbox.PlaceholderText = "ใส่รัศมี 10-1000"
+textbox.Text = tostring(circleRadius)
+textbox.LayoutOrder = 0
+textbox.BackgroundColor3 = Color3.fromRGB(80,30,30)
+textbox.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,8)
+textbox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local n = tonumber(textbox.Text)
+        if n and n >= 10 and n <= 1000 then
+            circleRadius = n
+        else
+            textbox.Text = tostring(circleRadius)
         end
-    end)
-
-    return container, textbox
-end
-
-createToggle("🎯 เปิดระบบ", false, function(val)
-    enabled = val
-    circle.Visible = val
-end).Parent = frame
-
-local radiusContainer, radiusBox = createLabeledTextbox("📏 กำหนดระยะวงกลม (Radius):", "10-1000", circleRadius, function(text)
-    local n = tonumber(text)
-    if n and n >= 10 and n <= 1000 then
-        circleRadius = n
-        circle.Radius = circleRadius
-    else
-        radiusBox.Text = tostring(circleRadius)
     end
 end)
-radiusContainer.Parent = frame
 
-createToggle("🚫 ไม่เล็งหากมีสิ่งกีดขวาง", false, function(v) ignoreObstruction = v end).Parent = frame
-createToggle("👥 ไม่เล็งทีมเดียวกัน", false, function(v) ignoreSameTeam = v end).Parent = frame
-createToggle("💀 ไม่เล็งคนเลือด 0", false, function(v) ignoreZeroHealth = v end).Parent = frame
-createToggle("🤝 ไม่เล็งเพื่อนในเซิฟเวอร์", false, function(v) ignoreFriends = v end).Parent = frame
-createToggle("🛠️ ให้ความสำคัญคนถือของ", false, function(v) prioritizeHoldingTool = v end).Parent = frame
-createToggle("🔫 เล็งเฉพาะคนถือของ", false, function(v) aimOnlyHoldingTool = v end).Parent = frame
+local buttonRows = {}
+local buttonNames = {{"🚫 ไม่เล็งหากมีสิ่งกีดขวาง","👥 ไม่เล็งทีมเดียวกัน"},{"💀 ไม่เล็งคนเลือด 0","🤝 ไม่เล็งเพื่อน"}}
+local toggleStates = {{ignoreObstruction},{ignoreSameTeam},{ignoreZeroHealth},{ignoreFriends}}
+local callbacks = {
+    function(v) ignoreObstruction=v end,
+    function(v) ignoreSameTeam=v end,
+    function(v) ignoreZeroHealth=v end,
+    function(v) ignoreFriends=v end
+}
 
-local killButton = Instance.new("TextButton")
-killButton.Size = UDim2.new(0.9, 0, 0, 27)
-killButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-killButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-killButton.TextSize = 13.5
-killButton.Font = Enum.Font.SourceSansBold
-killButton.Text = "❌ ปิด GUI ทิ้ง"
-Instance.new("UICorner", killButton).CornerRadius = UDim.new(0, 7)
-killButton.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-    circle:Remove()
+for i,rowNames in ipairs(buttonNames) do
+    local row = Instance.new("Frame", container)
+    row.Size = UDim2.new(1,0,0,36)
+    row.BackgroundTransparency = 1
+
+    local rowLayout = Instance.new("UIListLayout", row)
+    rowLayout.FillDirection = Enum.FillDirection.Horizontal
+    rowLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    rowLayout.Padding = UDim.new(0,8)
+
+    for j,name in ipairs(rowNames) do
+        local idx = (i-1)*2 + j
+        local b = Instance.new("TextButton", row)
+        b.Size = UDim2.new(0.5,-4,1,0)
+        b.BackgroundColor3 = Color3.fromRGB(150,111,51)
+        b.TextColor3 = Color3.fromRGB(255,255,255)
+        b.Text = name .. (toggleStates[idx][1] and ": ✅" or ": ❌")
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+
+        b.MouseButton1Click:Connect(function()
+            toggleStates[idx][1] = not toggleStates[idx][1]
+            b.Text = name .. (toggleStates[idx][1] and ": ✅" or ": ❌")
+            callbacks[idx](toggleStates[idx][1])
+            b.BackgroundColor3 = toggleStates[idx][1] and Color3.fromRGB(200,150,100) or Color3.fromRGB(150,111,51)
+        end)
+    end
+    table.insert(buttonRows,row)
+end
+
+local row5 = Instance.new("Frame", container)
+row5.Size = UDim2.new(1,0,0,36)
+row5.BackgroundTransparency = 1
+local row5Layout = Instance.new("UIListLayout", row5)
+row5Layout.FillDirection = Enum.FillDirection.Horizontal
+row5Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+row5Layout.Padding = UDim.new(0,4)
+row5.Parent = container
+
+local minusBtn = Instance.new("TextButton", row5)
+minusBtn.Text = "-"
+minusBtn.BackgroundColor3 = Color3.fromRGB(120,80,40)
+minusBtn.TextColor3 = Color3.fromRGB(255,255,255)
+minusBtn.Size = UDim2.new(0,60,1,0)
+Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0,6)
+
+local button5 = Instance.new("TextButton", row5)
+button5.Text = "🎯 เปิดระบบ"
+button5.BackgroundColor3 = Color3.fromRGB(150,111,51)
+button5.TextColor3 = Color3.fromRGB(255,255,255)
+button5.Size = UDim2.new(0,120,1,0)
+Instance.new("UICorner", button5).CornerRadius = UDim.new(0,8)
+
+local plusBtn = Instance.new("TextButton", row5)
+plusBtn.Text = "+"
+plusBtn.BackgroundColor3 = Color3.fromRGB(120,80,40)
+plusBtn.TextColor3 = Color3.fromRGB(255,255,255)
+plusBtn.Size = UDim2.new(0,60,1,0)
+Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0,6)
+
+button5.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    circle.Visible = enabled
+    button5.BackgroundColor3 = enabled and Color3.fromRGB(200,150,100) or Color3.fromRGB(150,111,51)
 end)
-killButton.Parent = frame
 
-local toggleButton = Instance.new("TextButton", screenGui)
-toggleButton.Size = UDim2.new(0, 100, 0, 30)
-toggleButton.Position = UDim2.new(1, -110, 0, 10)
-toggleButton.AnchorPoint = Vector2.new(0, 0)
-toggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.TextSize = 14
-toggleButton.Font = Enum.Font.SourceSansBold
-toggleButton.Text = "🧰 แสดง / ซ่อน GUI"
-Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 6)
-toggleButton.MouseButton1Click:Connect(function()
-    frame.Visible = not frame.Visible
+minusBtn.MouseButton1Click:Connect(function()
+    circleRadius = math.max(10,circleRadius-10)
+    textbox.Text = tostring(circleRadius)
+end)
+plusBtn.MouseButton1Click:Connect(function()
+    circleRadius = math.min(1000,circleRadius+10)
+    textbox.Text = tostring(circleRadius)
+end)
+
+local minimized = false
+toggleBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    toggleBtn.Text = minimized and ">" or "<"
+
+    textbox.Visible = not minimized
+    for _, row in ipairs(buttonRows) do
+        row.Visible = not minimized
+    end
+    row5.Visible = not minimized
+
+    if minimized then
+        container.Size = UDim2.new(0,60,0,50)
+    else
+        container.Size = UDim2.new(0,280,0,230)
+    end
 end)
 
 local dragging, dragInput, dragStart, startPos
-local function updateInput(input)
+local function update(input)
     local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                               startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    local newX = math.clamp(startPos.X.Offset+delta.X,0,Camera.ViewportSize.X-container.AbsoluteSize.X)
+    local newY = math.clamp(startPos.Y.Offset+delta.Y,0,Camera.ViewportSize.Y-container.AbsoluteSize.Y)
+    container.Position = UDim2.new(0,newX,0,newY)
 end
 
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+container.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
-        startPos = frame.Position
+        startPos = container.Position
         input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
+            if input.UserInputState==Enum.UserInputState.End then dragging=false end
         end)
     end
 end)
 
-frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+container.InputChanged:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        updateInput(input)
-    end
+UIS.InputChanged:Connect(function(input)
+    if dragging and input==dragInput then update(input) end
 end)
 
 local function canAimAt(player)
     if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") or not player.Character:FindFirstChild("Humanoid") then return false end
-    if player == LocalPlayer then return false end
-    if ignoreZeroHealth and player.Character.Humanoid.Health <= 0 then return false end
-    if ignoreSameTeam and LocalPlayer.Team == player.Team and LocalPlayer.Team ~= nil then return false end
+    if player==LocalPlayer then return false end
+    if ignoreZeroHealth and player.Character.Humanoid.Health<=0 then return false end
+    if ignoreSameTeam and LocalPlayer.Team==player.Team and LocalPlayer.Team~=nil then return false end
     if ignoreFriends and LocalPlayer:IsFriendsWith(player.UserId) then return false end
     if ignoreObstruction then
         local origin = Camera.CFrame.Position
         local headPos = player.Character.Head.Position
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, player.Character}
-        raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-        local rayResult = Workspace:Raycast(origin, (headPos - origin), raycastParams)
-        if rayResult and not rayResult.Instance:IsDescendantOf(player.Character) then
-            return false
-        end
+        local rayParams = RaycastParams.new()
+        rayParams.FilterDescendantsInstances={LocalPlayer.Character,player.Character}
+        rayParams.FilterType=Enum.RaycastFilterType.Blacklist
+        local rayResult = Workspace:Raycast(origin,(headPos-origin),rayParams)
+        if rayResult and not rayResult.Instance:IsDescendantOf(player.Character) then return false end
     end
     return true
 end
 
-local function isHoldingTool(player)
-    if player.Character then
-        for _, child in pairs(player.Character:GetChildren()) do
-            if child:IsA("Tool") then
-                return true
-            end
-        end
-    end
-    return false
-end
-
 RunService.RenderStepped:Connect(function()
-    local screenSize = Camera.ViewportSize
-    circle.Position = Vector2.new(screenSize.X/2, screenSize.Y/2)
+    circle.Position = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y/2)
     circle.Radius = circleRadius
+    circle.Visible = enabled
 
-    if not enabled then
-        circle.Visible = false
-        return
-    else
-        circle.Visible = true
-    end
+    if not enabled then return end
 
-    local center = Vector2.new(screenSize.X/2, screenSize.Y/2)
+    local center = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y/2)
+    local closestPlayer, closestDist = nil, circleRadius
 
-    local candidates, holdingPlayers, nonHoldingPlayers = {}, {}, {}
-    for _, player in pairs(Players:GetPlayers()) do
+    for _,player in pairs(Players:GetPlayers()) do
         if canAimAt(player) and player.Character and player.Character:FindFirstChild("Head") then
-            if isHoldingTool(player) then
-                table.insert(holdingPlayers, player)
-            else
-                table.insert(nonHoldingPlayers, player)
-            end
-            table.insert(candidates, player)
-        end
-    end
-
-    local function findClosest(playersList)
-        local closestPlayer, closestDist = nil, circleRadius
-        for _, player in pairs(playersList) do
-            local headPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+            local headPos,onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
             if onScreen then
-                local dist = (Vector2.new(headPos.X, headPos.Y) - center).Magnitude
+                local dist = (Vector2.new(headPos.X,headPos.Y)-center).Magnitude
                 if dist <= closestDist then
                     closestDist = dist
                     closestPlayer = player
                 end
             end
         end
-        return closestPlayer
-    end
-
-    local closestPlayer
-
-    if aimOnlyHoldingTool then
-        closestPlayer = findClosest(holdingPlayers)
-    else
-        closestPlayer = prioritizeHoldingTool and findClosest(holdingPlayers) or findClosest(candidates)
-        if not closestPlayer then
-            closestPlayer = findClosest(nonHoldingPlayers)
-        end
     end
 
     if closestPlayer and closestPlayer.Character then
-        local head = closestPlayer.Character.Head
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position,closestPlayer.Character.Head.Position)
     end
 end)
