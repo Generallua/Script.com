@@ -1,3 +1,4 @@
+
 local player = game:GetService("Players").LocalPlayer    
 local UIS = game:GetService("UserInputService")    
 local camera = workspace.CurrentCamera    
@@ -20,6 +21,11 @@ container.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
 container.Active = true    
 container.Parent = screenGui    
 
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(102, 0, 0) -- สีแดง
+stroke.Parent = container
+
 local corner = Instance.new("UICorner")    
 corner.CornerRadius = UDim.new(0, 12)    
 corner.Parent = container    
@@ -30,6 +36,7 @@ padding.PaddingBottom = UDim.new(0, 10)
 padding.PaddingLeft = UDim.new(0, 10)    
 padding.PaddingRight = UDim.new(0, 10)    
 padding.Parent = container    
+
 
 local layout = Instance.new("UIListLayout")    
 layout.FillDirection = Enum.FillDirection.Vertical    
