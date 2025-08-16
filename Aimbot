@@ -117,7 +117,7 @@ for i,rowNames in ipairs(buttonNames) do
             toggleStates[idx][1] = not toggleStates[idx][1]
             b.Text = name .. (toggleStates[idx][1] and ": 1" or ": 0")
             callbacks[idx](toggleStates[idx][1])
-            b.BackgroundColor3 = toggleStates[idx][1] and Color3.fromRGB(200,150,100) or Color3.fromRGB(51, 0, 0)
+            b.BackgroundColor3 = toggleStates[idx][1] and Color3.fromRGB(50,100,0) or Color3.fromRGB(51, 0, 0)
         end)
     end
     table.insert(buttonRows,row)
