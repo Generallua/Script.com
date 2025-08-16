@@ -1,0 +1,94 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+_G.ESPEnabled = true       -- true = เปิด ESP, false = ปิดทั้งหมด
+_G.ESPEnemiesOnly = fales  -- true = แสดงเฉพาะศัตรู, false = แสดงทีมเดียวกันและศัตรู
+
+local lines = {}
+
+local function createLine(player)
+    local line = Drawing.new("Line")
+    line.Thickness = 2
+    line.Transparency = 1
+    line.Visible = true
+    return line
+end
+
+local function applyHighlight(player)
+    if player.Character then
+        if not player.Character:FindFirstChild("ESP_Highlight") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "ESP_Highlight"
+            highlight.RobloxLocked = true
+            highlight.Adornee = player.Character
+            highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            highlight.Parent = player.Character
+        end
+
+        highlightColor = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255,255,255)
+        player.Character.ESP_Highlight.FillColor = highlightColor
+        player.Character.ESP_Highlight.Enabled = true
+        return highlightColor
+    end
+end
+
+local function updateESP()
+    if not _G.ESPEnabled then
+        for player, line in pairs(lines) do
+            line.Visible = false
+            if player.Character and player.Character:FindFirstChild("ESP_Highlight") then
+                player.Character.ESP_Highlight.Enabled = false
+            end
+        end
+        return
+    end
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            local isEnemy = player.Team ~= LocalPlayer.Team
+
+            if _G.ESPEnemiesOnly and not isEnemy then
+                if lines[player] then lines[player].Visible = false end
+                if player.Character and player.Character:FindFirstChild("ESP_Highlight") then
+                    player.Character.ESP_Highlight.Enabled = false
+                end
+            else
+                local color = applyHighlight(player)
+
+                if not lines[player] then
+                    lines[player] = createLine(player)
+                end
+
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local startPos = Camera:WorldToViewportPoint(LocalPlayer.Character.HumanoidRootPart.Position)
+                    local endPos, onScreen = Camera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+                    if onScreen then
+                        lines[player].From = Vector2.new(startPos.X, startPos.Y)
+                        lines[player].To = Vector2.new(endPos.X, endPos.Y)
+                        lines[player].Visible = true
+                        lines[player].Color = color
+                    else
+                        lines[player].Visible = false
+                    end
+                else
+                    lines[player].Visible = false
+                end
+            end
+        end
+    end
+end
+
+Players.PlayerRemoving:Connect(function(player)
+    if lines[player] then
+        lines[player]:Remove()
+        lines[player] = nil
+    end
+    if player.Character and player.Character:FindFirstChild("ESP_Highlight") then
+        player.Character.ESP_Highlight:Destroy()
+    end
+end)
+
+RunService.RenderStepped:Connect(updateESP)
