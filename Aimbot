@@ -85,7 +85,7 @@ textbox.FocusLost:Connect(function(enterPressed)
 end)
 
 local buttonRows = {}
-local buttonNames = {{"🚫 ไม่เล็งหากมีสิ่งกีดขวาง","👥 ไม่เล็งคนเลือด"},{"💀 ไม่เล็งคนเลือด 0","🤝 ไม่เล็งเพื่อน"}}
+local buttonNames = {{"🚫 ไม่เล็งหากมีสิ่งกีดขวาง","👥 ไม่เล็งทีม"},{"💀 ไม่เล็งคนเลือด 0","🤝 ไม่เล็งเพื่อน"}}
 local toggleStates = {{ignoreObstruction},{ignoreSameTeam},{ignoreZeroHealth},{ignoreFriends}}
 local callbacks = {
     function(v) ignoreObstruction=v end,
