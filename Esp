@@ -40,18 +40,42 @@ local function applyHighlight(player)
     end
 end
 
+-- ฟังก์ชันจัดการผู้เล่นใหม่
+local function setupPlayer(player)
+    if player ~= LocalPlayer then
+        if not lines[player] then
+            lines[player] = createLine()
+        end
+    end
+end
+
+-- ตั้งค่าผู้เล่นที่อยู่แล้ว
+for _, player in ipairs(Players:GetPlayers()) do
+    setupPlayer(player)
+end
+
+-- เมื่อผู้เล่นเข้ามา
+Players.PlayerAdded:Connect(function(player)
+    setupPlayer(player)
+end)
+
+-- เมื่อผู้เล่นออก
+Players.PlayerRemoving:Connect(function(player)
+    if lines[player] then
+        lines[player]:Remove()
+        lines[player] = nil
+    end
+end)
+
+-- อัปเดต ESP และเส้น
 RunService.RenderStepped:Connect(function()
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if not lines[player] then
-                lines[player] = createLine()
-            end
-            local line = lines[player]
-
             if _G.ESPEnabled then
                 local show = not _G.OnlyEnemy or (player.Team ~= LocalPlayer.Team)
                 applyHighlight(player)
-                if show then
+                local line = lines[player]
+                if show and line then
                     local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
                     if onScreen then
                         line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
@@ -61,11 +85,13 @@ RunService.RenderStepped:Connect(function()
                     else
                         line.Visible = false
                     end
-                else
+                elseif line then
                     line.Visible = false
                 end
             else
-                line.Visible = false
+                if lines[player] then
+                    lines[player].Visible = false
+                end
                 if player.Character and player.Character:FindFirstChild("ESP_Highlight") then
                     player.Character.ESP_Highlight.Enabled = false
                 end
