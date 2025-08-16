@@ -5,9 +5,9 @@ local Workspace = game:GetService("Workspace")
 local Camera = Workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
-local existingGui = LocalPlayer:FindFirstChild("PlayerGui") and LocalPlayer.PlayerGui:FindFirstChild("FiveButtonsGUI")
-if existingGui then
-    existingGui:Destroy()
+-- ลบ GUI เก่าถ้ามี
+if game:GetService("CoreGui"):FindFirstChild("FiveButtonsGUI") then
+    game:GetService("CoreGui").FiveButtonsGUI:Destroy()
 end
 
 local ignoreObstruction = false
@@ -24,9 +24,11 @@ circle.Thickness = 2
 circle.Filled = false
 circle.Radius = circleRadius
 
-local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+-- สร้าง GUI ใน CoreGui
+local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "FiveButtonsGUI"
 screenGui.ResetOnSpawn = false
+screenGui.Parent = game:GetService("CoreGui")
 
 local container = Instance.new("Frame")
 container.Name = "Container"
@@ -39,7 +41,7 @@ Instance.new("UICorner", container).CornerRadius = UDim.new(0,12)
 
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 3
-stroke.Color = Color3.fromRGB(102, 0, 0) -- สีแดง
+stroke.Color = Color3.fromRGB(102, 0, 0)
 stroke.Parent = container
 
 local padding = Instance.new("UIPadding", container)
