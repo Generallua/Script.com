@@ -55,7 +55,7 @@ toggleBtn.Size = UDim2.new(0,30,0,30)
 toggleBtn.Position = UDim2.new(0,5,0,5)
 toggleBtn.AnchorPoint = Vector2.new(0,0)
 toggleBtn.Text = "<"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(49, 89, 49)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(89, 89, 89)
 toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,6)
 
@@ -65,7 +65,7 @@ textbox.ClearTextOnFocus = false
 textbox.PlaceholderText = "ใส่รัศมี 10-1000"
 textbox.Text = tostring(circleRadius)
 textbox.LayoutOrder = 0
-textbox.BackgroundColor3 = Color3.fromRGB(100, 25, 30)
+textbox.BackgroundColor3 = Color3.fromRGB(20, 25, 30)
 textbox.TextColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner", textbox).CornerRadius = UDim.new(0,8)
 textbox.FocusLost:Connect(function(enterPressed)
