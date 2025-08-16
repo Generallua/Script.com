@@ -1,17 +1,15 @@
-
 local player = game:GetService("Players").LocalPlayer    
 local UIS = game:GetService("UserInputService")    
 local camera = workspace.CurrentCamera    
 
-local existingGui = player:FindFirstChild("PlayerGui"):FindFirstChild("FiveButtonsGUI")
-if existingGui then
-    existingGui:Destroy()
+if game:GetService("CoreGui"):FindFirstChild("FiveButtonsGUI") then
+    game:GetService("CoreGui").FiveButtonsGUI:Destroy()
 end
 
 local screenGui = Instance.new("ScreenGui")    
 screenGui.Name = "FiveButtonsGUI"    
 screenGui.ResetOnSpawn = false    
-screenGui.Parent = player:WaitForChild("PlayerGui")    
+screenGui.Parent = game:GetService("CoreGui")    
 
 local container = Instance.new("Frame")    
 container.Name = "Container"    
@@ -23,7 +21,7 @@ container.Parent = screenGui
 
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 3
-stroke.Color = Color3.fromRGB(102, 0, 0) -- สีแดง
+stroke.Color = Color3.fromRGB(102, 0, 0)
 stroke.Parent = container
 
 local corner = Instance.new("UICorner")    
@@ -36,7 +34,6 @@ padding.PaddingBottom = UDim.new(0, 10)
 padding.PaddingLeft = UDim.new(0, 10)    
 padding.PaddingRight = UDim.new(0, 10)    
 padding.Parent = container    
-
 
 local layout = Instance.new("UIListLayout")    
 layout.FillDirection = Enum.FillDirection.Vertical    
@@ -112,28 +109,32 @@ end
 
 local funcs = {
     function() local plr = game.Players.LocalPlayer
-if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-    setclipboard(tostring(plr.Character.HumanoidRootPart.Position))
-end end,
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            setclipboard(tostring(plr.Character.HumanoidRootPart.Position))
+        end
+    end,
     function() local plr = game.Players.LocalPlayer
-if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-    setclipboard(tostring(plr.Character.HumanoidRootPart.CFrame))
-end end,
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            setclipboard(tostring(plr.Character.HumanoidRootPart.CFrame))
+        end
+    end,
     function() local plr = game.Players.LocalPlayer
-if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-    local pos = plr.Character.HumanoidRootPart.Position
-    local warpScript = "game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(" 
-                       .. pos.X .. ", " .. pos.Y .. ", " .. pos.Z .. ")"
-    setclipboard(warpScript)
-end end,
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = plr.Character.HumanoidRootPart.Position
+            local warpScript = "game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(" 
+                               .. pos.X .. ", " .. pos.Y .. ", " .. pos.Z .. ")"
+            setclipboard(warpScript)
+        end
+    end,
     function() local plr = game.Players.LocalPlayer
-if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-    local cf = plr.Character.HumanoidRootPart.CFrame
-    local cfTable = {cf:GetComponents()}
-    local warpScript = "game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(" ..
-                       table.concat(cfTable, ", ") .. ")"
-    setclipboard(warpScript)
-end end
+        if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local cf = plr.Character.HumanoidRootPart.CFrame
+            local cfTable = {cf:GetComponents()}
+            local warpScript = "game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(" ..
+                               table.concat(cfTable, ", ") .. ")"
+            setclipboard(warpScript)
+        end
+    end
 }
 
 makeButtonRow({"Position","CFrame"}, {funcs[1], funcs[2]})
