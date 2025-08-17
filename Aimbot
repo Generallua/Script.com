@@ -217,21 +217,43 @@ UIS.InputChanged:Connect(function(input)
     if dragging and input==dragInput then update(input) end
 end)
 
+-- ฟังก์ชันตรวจว่ามีสิ่งกีดขวางหรือไม่
+local function rayBlocked(part)
+    local origin = Camera.CFrame.Position
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    local rayResult = Workspace:Raycast(origin, (part.Position - origin), rayParams)
+    return rayResult and not rayResult.Instance:IsDescendantOf(part.Parent)
+end
+
+-- ฟังก์ชันเลือกส่วนที่จะเล็งตามลำดับ
+local function getAimPart(player)
+    if not player.Character or not player.Character:FindFirstChild("Humanoid") then return nil end
+
+    local partsPriority = {
+        "Head",
+        "HumanoidRootPart",
+        "RightUpperArm","LeftUpperArm","RightLowerArm","LeftLowerArm",
+        "RightUpperLeg","LeftUpperLeg","RightLowerLeg","LeftLowerLeg"
+    }
+
+    for _,partName in ipairs(partsPriority) do
+        local part = player.Character:FindFirstChild(partName)
+        if part and (not ignoreObstruction or not rayBlocked(part)) then
+            return part
+        end
+    end
+
+    return nil
+end
+
 local function canAimAt(player)
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") or not player.Character:FindFirstChild("Humanoid") then return false end
+    if not player.Character or not player.Character:FindFirstChild("Humanoid") then return false end
     if player==LocalPlayer then return false end
     if ignoreZeroHealth and player.Character.Humanoid.Health<=0 then return false end
     if ignoreSameTeam and LocalPlayer.Team==player.Team and LocalPlayer.Team~=nil then return false end
     if ignoreFriends and LocalPlayer:IsFriendsWith(player.UserId) then return false end
-    if ignoreObstruction then
-        local origin = Camera.CFrame.Position
-        local headPos = player.Character.Head.Position
-        local rayParams = RaycastParams.new()
-        rayParams.FilterDescendantsInstances={LocalPlayer.Character,player.Character}
-        rayParams.FilterType=Enum.RaycastFilterType.Blacklist
-        local rayResult = Workspace:Raycast(origin,(headPos-origin),rayParams)
-        if rayResult and not rayResult.Instance:IsDescendantOf(player.Character) then return false end
-    end
     return true
 end
 
@@ -244,21 +266,26 @@ RunService.RenderStepped:Connect(function()
 
     local center = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y/2)
     local closestPlayer, closestDist = nil, circleRadius
+    local aimPart = nil
 
     for _,player in pairs(Players:GetPlayers()) do
-        if canAimAt(player) and player.Character and player.Character:FindFirstChild("Head") then
-            local headPos,onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
-            if onScreen then
-                local dist = (Vector2.new(headPos.X,headPos.Y)-center).Magnitude
-                if dist <= closestDist then
-                    closestDist = dist
-                    closestPlayer = player
+        if canAimAt(player) then
+            local part = getAimPart(player)
+            if part then
+                local headPos,onScreen = Camera:WorldToViewportPoint(part.Position)
+                if onScreen then
+                    local dist = (Vector2.new(headPos.X,headPos.Y)-center).Magnitude
+                    if dist <= closestDist then
+                        closestDist = dist
+                        closestPlayer = player
+                        aimPart = part
+                    end
                 end
             end
         end
     end
 
-    if closestPlayer and closestPlayer.Character then
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position,closestPlayer.Character.Head.Position)
+    if closestPlayer and aimPart then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)
     end
 end)
