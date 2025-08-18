@@ -142,6 +142,13 @@ minusBtn.TextColor3 = Color3.fromRGB(255,255,255)
 minusBtn.Size = UDim2.new(0,60,1,0)
 Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0,6)
 
+local button5 = Instance.new("TextButton", row5)
+button5.Text = "O"
+button5.BackgroundColor3 = Color3.fromRGB(51,0,0)
+button5.TextColor3 = Color3.fromRGB(255,255,255)
+button5.Size = UDim2.new(0,120,1,0)
+Instance.new("UICorner", button5).CornerRadius = UDim.new(0,8)
+
 local plusBtn = Instance.new("TextButton", row5)
 plusBtn.Text = "+"
 plusBtn.BackgroundColor3 = Color3.fromRGB(51,0,0)
@@ -190,6 +197,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     container.Size = minimized and UDim2.new(0,120,0,80) or UDim2.new(0,280,0,230)
     speedBtn.Visible = minimized
 end)
+
 
 -- Drag GUI
 local dragging, dragInput, dragStart, startPos
