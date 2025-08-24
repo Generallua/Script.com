@@ -1,0 +1,362 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+if game:GetService("CoreGui"):FindFirstChild("PlayersGUI") then
+    game:GetService("CoreGui").PlayersGUI:Destroy()
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "PlayersGUI"
+screenGui.Parent = game:GetService("CoreGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 500, 0, 500)
+mainFrame.Position = UDim2.new(0, 10, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 30, 0, 30)
+toggleBtn.Position = UDim2.new(0, 5, 0, 5)
+toggleBtn.Text = "<>"
+toggleBtn.TextSize = 18
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+toggleBtn.Parent = mainFrame
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(0, 100, 0, 30)
+titleLabel.Position = UDim2.new(0, 40, 0, 5)
+titleLabel.Text = "player gui🎓"
+titleLabel.TextColor3 = Color3.new(1,1,1)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.TextSize = 18
+titleLabel.Parent = mainFrame
+
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Size = UDim2.new(1, -10, 1, -60)
+scrollFrame.Position = UDim2.new(0, 5, 0, 40)
+scrollFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)
+scrollFrame.ScrollBarThickness = 6
+scrollFrame.CanvasSize = UDim2.new(0,0,0,0)
+scrollFrame.Parent = mainFrame
+Instance.new("UICorner", scrollFrame).CornerRadius = UDim.new(0, 8)
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Parent = scrollFrame
+listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+listLayout.Padding = UDim.new(0,5)
+listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    scrollFrame.CanvasSize = UDim2.new(0,0,0,listLayout.AbsoluteContentSize.Y + 10)
+end)
+
+local function darken(color, factor)
+    return Color3.new(color.R*factor, color.G*factor, color.B*factor)
+end
+
+local playerFrames = {}
+local bringLoops = {}
+local hitboxLoops = {}
+local _G_HeadSize = 10
+local bringDistance = 5
+
+local bringBox = Instance.new("TextBox")
+bringBox.Size = UDim2.new(0,60,0,30)
+bringBox.Position = UDim2.new(1,-70,0,5)
+bringBox.Text = tostring(bringDistance)
+bringBox.ClearTextOnFocus = false
+bringBox.TextColor3 = Color3.new(1,1,1)
+bringBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+bringBox.Font = Enum.Font.SourceSansBold
+bringBox.TextSize = 18
+bringBox.Parent = mainFrame
+Instance.new("UICorner", bringBox).CornerRadius = UDim.new(0,4)
+bringBox.FocusLost:Connect(function()
+    local n = tonumber(bringBox.Text)
+    if n then 
+        bringDistance = n
+        _G_HeadSize = n
+    end
+end)
+
+local function createPlayerFrame(player)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -10, 0, 50)
+    frame.BackgroundColor3 = (player.Team and player.Team.TeamColor.Color) or Color3.fromRGB(60,60,60)
+    frame.Parent = scrollFrame
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
+
+    local icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0,50,0,50)
+    icon.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+    icon.BackgroundTransparency = 1
+    icon.Parent = frame
+
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(0, 120, 1, 0)
+    nameLabel.Position = UDim2.new(0,60,0,0)
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = (player.Team and darken(player.Team.TeamColor.Color,0.6)) or Color3.new(1,1,1)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Font = Enum.Font.SourceSansBold
+    nameLabel.TextSize = 18
+    nameLabel.Parent = frame
+
+    local espBtn = Instance.new("TextButton")
+    espBtn.Size = UDim2.new(0,40,0,30)
+    espBtn.Position = UDim2.new(0,190,0,10)
+    espBtn.Text = "ESP"
+    espBtn.Font = Enum.Font.SourceSansBold
+    espBtn.TextSize = 14
+    espBtn.TextColor3 = Color3.new(1,1,1)
+    espBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    espBtn.Parent = frame
+    Instance.new("UICorner", espBtn).CornerRadius = UDim.new(0,4)
+
+    local specBtn = Instance.new("TextButton")
+    specBtn.Size = UDim2.new(0,60,0,30)
+    specBtn.Position = UDim2.new(0,240,0,10)
+    specBtn.Text = "Spec"
+    specBtn.Font = Enum.Font.SourceSansBold
+    specBtn.TextSize = 14
+    specBtn.TextColor3 = Color3.new(1,1,1)
+    specBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    specBtn.Parent = frame
+    Instance.new("UICorner", specBtn).CornerRadius = UDim.new(0,4)
+
+    local bringBtn = Instance.new("TextButton")
+    bringBtn.Size = UDim2.new(0,50,0,30)
+    bringBtn.Position = UDim2.new(0,310,0,10)
+    bringBtn.Text = "Bring"
+    bringBtn.Font = Enum.Font.SourceSansBold
+    bringBtn.TextSize = 14
+    bringBtn.TextColor3 = Color3.new(1,1,1)
+    bringBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    bringBtn.Parent = frame
+    Instance.new("UICorner", bringBtn).CornerRadius = UDim.new(0,4)
+
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(0,50,0,30)
+    tpBtn.Position = UDim2.new(0,370,0,10)
+    tpBtn.Text = "TP"
+    tpBtn.Font = Enum.Font.SourceSansBold
+    tpBtn.TextSize = 14
+    tpBtn.TextColor3 = Color3.new(1,1,1)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    tpBtn.Parent = frame
+    Instance.new("UICorner", tpBtn).CornerRadius = UDim.new(0,4)
+
+    local hitboxBtn = Instance.new("TextButton")
+    hitboxBtn.Size = UDim2.new(0,50,0,30)
+    hitboxBtn.Position = UDim2.new(0,430,0,10)
+    hitboxBtn.Text = "Hitbox"
+    hitboxBtn.Font = Enum.Font.SourceSansBold
+    hitboxBtn.TextSize = 14
+    hitboxBtn.TextColor3 = Color3.new(1,1,1)
+    hitboxBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    hitboxBtn.Parent = frame
+    Instance.new("UICorner", hitboxBtn).CornerRadius = UDim.new(0,4)
+
+
+    local espEnabled = false
+    local highlight = nil
+    local line = nil
+    local specEnabled = false
+    local bringEnabled = false
+    local hitEnabled = false
+    espBtn.MouseButton1Click:Connect(function()
+        espEnabled = not espEnabled
+        if espEnabled then
+            espBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                highlight = Instance.new("Highlight")
+                highlight.Name = "ESP_Highlight"
+                highlight.RobloxLocked = true
+                highlight.Adornee = player.Character
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                highlight.FillColor = player.Team and player.Team.TeamColor.Color or Color3.new(1,1,1)
+                highlight.Parent = player.Character
+
+                line = Drawing.new("Line")
+                line.Thickness = 2
+                line.Transparency = 1
+                line.Color = player.Team and player.Team.TeamColor.Color or Color3.new(1,1,1)
+                line.Visible = true
+            end
+        else
+            espBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            if highlight then highlight:Destroy() highlight=nil end
+            if line then line:Remove() line=nil end
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if espEnabled and line and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            if onScreen then
+                line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                line.To = Vector2.new(pos.X,pos.Y)
+                line.Visible = true
+            else
+                line.Visible = false
+            end
+        end
+    end)
+
+
+    specBtn.MouseButton1Click:Connect(function()
+        specEnabled = not specEnabled
+        if specEnabled then
+            specBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+            Camera.CameraType = Enum.CameraType.Track
+            Camera.CameraSubject = player.Character and player.Character:FindFirstChild("Humanoid") or nil
+        else
+            specBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            Camera.CameraType = Enum.CameraType.Custom
+            Camera.CameraSubject = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") or nil
+        end
+    end)
+
+
+    bringBtn.MouseButton1Click:Connect(function()
+        bringEnabled = not bringEnabled
+        if bringEnabled then
+            bringBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+            bringLoops[player] = true
+        else
+            bringBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            bringLoops[player] = false
+        end
+    end)
+    tpBtn.MouseButton1Click:Connect(function()
+        tpBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = player.Character.HumanoidRootPart.Position + Vector3.new(0,3,0)
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+        end
+        wait(0.3)
+        tpBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+    end)
+
+    
+    hitboxBtn.MouseButton1Click:Connect(function()
+        hitEnabled = not hitEnabled
+        if hitEnabled then
+            hitboxBtn.BackgroundColor3 = Color3.fromRGB(0,200,0)
+            hitboxLoops[player] = true
+        else
+            hitboxBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+            hitboxLoops[player] = false
+            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                pcall(function()
+                    player.Character.HumanoidRootPart.Size = Vector3.new(2,2,1)
+                    player.Character.HumanoidRootPart.Transparency = 1
+                    player.Character.HumanoidRootPart.BrickColor = BrickColor.new("Medium stone grey")
+                    player.Character.HumanoidRootPart.Material = Enum.Material.Plastic
+                    player.Character.HumanoidRootPart.CanCollide = true
+                end)
+            end
+        end
+    end)
+
+    player:GetPropertyChangedSignal("Team"):Connect(function()
+        local c = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(60,60,60)
+        frame.BackgroundColor3 = c
+        nameLabel.TextColor3 = darken(c,0.6)
+        if highlight then
+            highlight.FillColor = c
+        end
+    end)
+
+    playerFrames[player] = {frame=frame}
+end
+
+for _,player in ipairs(Players:GetPlayers()) do
+    createPlayerFrame(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+    createPlayerFrame(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    local data = playerFrames[player]
+    if data then
+        data.frame:Destroy()
+        playerFrames[player] = nil
+    end
+    hitboxLoops[player] = false
+    bringLoops[player] = false
+end)
+
+
+RunService.RenderStepped:Connect(function()
+    for player,active in pairs(bringLoops) do
+        if active and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local targetPos = LocalPlayer.Character.HumanoidRootPart.Position + (LocalPlayer.Character.HumanoidRootPart.CFrame.LookVector * bringDistance)
+            local targetCF = CFrame.new(targetPos, targetPos + LocalPlayer.Character.HumanoidRootPart.CFrame.LookVector)
+            player.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame:Lerp(targetCF, 1)
+        end
+    end
+end)
+
+
+RunService.RenderStepped:Connect(function()
+    for player,active in pairs(hitboxLoops) do
+        if active and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                local size = Vector3.new(_G_HeadSize,_G_HeadSize,_G_HeadSize)
+                player.Character.HumanoidRootPart.Size = size
+                player.Character.HumanoidRootPart.Transparency = 0.9
+                local teamColor = player.Team and player.Team.TeamColor.Color or Color3.new(0,0,1)
+                player.Character.HumanoidRootPart.BrickColor = BrickColor.new(teamColor)
+                player.Character.HumanoidRootPart.Material = Enum.Material.Neon
+                player.Character.HumanoidRootPart.CanCollide = false
+            end)
+        end
+    end
+end)
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+RunService.RenderStepped:Connect(function()
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    local framePos = mainFrame.Position
+    local frameSize = mainFrame.Size
+
+    
+    local posX = framePos.X.Offset
+    local posY = framePos.Y.Offset
+    local sizeX = frameSize.X.Offset
+    local sizeY = frameSize.Y.Offset
+
+    
+    if posX < 0 then posX = 0 end
+    if posY < 0 then posY = 0 end
+    if posX + sizeX > screenSize.X then posX = screenSize.X - sizeX end
+    if posY + sizeY > screenSize.Y then posY = screenSize.Y - sizeY end
+
+    mainFrame.Position = UDim2.new(0, posX, 0, posY)
+end)
+
+
+local minimized=false
+toggleBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        scrollFrame.Visible=false
+        mainFrame.Size = UDim2.new(0,500,0,40)
+    else
+        scrollFrame.Visible=true
+        mainFrame.Size = UDim2.new(0,500,0,500)
+    end
+end)
