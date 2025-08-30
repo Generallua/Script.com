@@ -1,9 +1,13 @@
+_G.TweenEnabled = true
+local speed = 300
+local targetPosition = Vector3.new(0, 100, 0)
+
 local TweenService = game:GetService("TweenService")
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
-local targetPosition = Vector3.new(0, 100, 0)
-local speed = 300
+
+local activeTweens = {}
 
 local function getSeat()
     for _, seat in pairs(workspace:GetDescendants()) do
@@ -14,16 +18,23 @@ local function getSeat()
 end
 
 local function tweenPart(part, destination)
+    if not _G.TweenEnabled then return end
     local distance = (part.Position - destination).Magnitude
     local time = distance / speed
     local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
     local tween = TweenService:Create(part, tweenInfo, {CFrame = CFrame.new(destination)})
-    part.Anchored = true
     tween:Play()
-    tween.Completed:Connect(function()
-        part.Anchored = false
-    end)
+    table.insert(activeTweens, tween)
 end
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not _G.TweenEnabled then
+        for _, tween in pairs(activeTweens) do
+            tween:Cancel()
+        end
+        activeTweens = {}
+    end
+end)
 
 tweenPart(hrp, targetPosition)
 
