@@ -1,0 +1,38 @@
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local targetPosition = Vector3.new(0, 100, 0)
+local speed = 300
+
+local function getSeat()
+    for _, seat in pairs(workspace:GetDescendants()) do
+        if (seat:IsA("Seat") or seat:IsA("VehicleSeat")) and seat.Occupant == character:FindFirstChild("Humanoid") then
+            return seat
+        end
+    end
+end
+
+local function tweenPart(part, destination)
+    local distance = (part.Position - destination).Magnitude
+    local time = distance / speed
+    local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(part, tweenInfo, {CFrame = CFrame.new(destination)})
+    part.Anchored = true
+    tween:Play()
+    tween.Completed:Connect(function()
+        part.Anchored = false
+    end)
+end
+
+tweenPart(hrp, targetPosition)
+
+local seat = getSeat()
+if seat then
+    local model = seat.Parent or seat
+    for _, part in pairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            tweenPart(part, targetPosition)
+        end
+    end
+end
