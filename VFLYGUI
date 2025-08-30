@@ -1,77 +1,111 @@
-local speaker = game.Players.LocalPlayer
+-- 🌌 Vehicle Fly Script (GUI + Fly + Instant Tween Warp)
+local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
-local v3zero = Vector3.new(0, 0, 0)
-local v3none = Vector3.new()
-local v3inf = Vector3.new(9e9, 9e9, 9e9)
+local flying = false
+local vehicleflyspeed = 100
+local tweening = false
 
-local vehicleflyspeed = 1
 local velocityName = "vfly_velocity"
 local gyroName = "vfly_gyro"
-local flying = false
 
+-- Utility
 local function getRoot(char)
-return char and char:FindFirstChild("HumanoidRootPart")
+	return char and char:FindFirstChild("HumanoidRootPart")
 end
 
 local function stopFly()
-local root = getRoot(speaker.Character)
-if not root then return end
-for _,v in pairs(root:GetChildren()) do
-if v:IsA("BodyVelocity") and v.Name == velocityName then v:Destroy() end
-if v:IsA("BodyGyro") and v.Name == gyroName then v:Destroy() end
-end
+	local root = getRoot(player.Character)
+	if not root then return end
+	for _,v in pairs(root:GetChildren()) do
+		if v:IsA("BodyVelocity") and v.Name == velocityName then v:Destroy() end
+		if v:IsA("BodyGyro") and v.Name == gyroName then v:Destroy() end
+	end
 end
 
 local function startFly()
-stopFly()
-local root = getRoot(speaker.Character)
-if not root then return end
+	stopFly()
+	local root = getRoot(player.Character)
+	if not root then return end
 
-local bv = Instance.new("BodyVelocity")
-bv.Name = velocityName
-bv.Parent = root
-bv.MaxForce = v3inf
-bv.Velocity = v3zero
+	local bv = Instance.new("BodyVelocity")
+	bv.Name = velocityName
+	bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	bv.Velocity = Vector3.zero
+	bv.Parent = root
 
-local bg = Instance.new("BodyGyro")
-bg.Name = gyroName
-bg.Parent = root
-bg.MaxTorque = v3inf
-bg.P = 1000
-bg.D = 50
+	local bg = Instance.new("BodyGyro")
+	bg.Name = gyroName
+	bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+	bg.P = 10000
+	bg.D = 500
+	bg.Parent = root
 end
 
+-- 🌟 Instant warp (ทะลุสิ่งกีดขวางทันที)
+local function instantWarp(part, destination)
+	if tweening then return end
+	tweening = true
+	local tweenInfo = TweenInfo.new(0, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(part, tweenInfo, {CFrame = CFrame.new(destination)})
+	tween:Play()
+	tween.Completed:Wait()
+	tweening = false
+end
+
+-- Main Fly Loop
 RunService.RenderStepped:Connect(function()
-if not flying then return end
-local root = getRoot(speaker.Character)
-if not root then return end
-local bv = root:FindFirstChild(velocityName)
-local bg = root:FindFirstChild(gyroName)
-if not bv or not bg then return end
+	if not flying or tweening then return end
+	local root = getRoot(player.Character)
+	if not root then return end
 
-bg.CFrame = camera.CFrame
-bv.Velocity = v3none
+	local bv = root:FindFirstChild(velocityName)
+	local bg = root:FindFirstChild(gyroName)
+	if not bv or not bg then return end
 
-local controlModule = require(speaker.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
-local moveVector = controlModule:GetMoveVector()
+	bg.CFrame = camera.CFrame
 
-if moveVector.X ~= 0 then
-bv.Velocity += camera.CFrame.RightVector * (moveVector.X * vehicleflyspeed * 50)
-end
-if moveVector.Z ~= 0 then
-bv.Velocity += -camera.CFrame.LookVector * (moveVector.Z * vehicleflyspeed * 50)
-end
+	-- direction from input
+	local controlModule = require(player.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
+	local move = controlModule:GetMoveVector()
+	local direction = camera.CFrame.RightVector * move.X + -camera.CFrame.LookVector * move.Z
+
+	-- up/down
+	local moveVector = Vector3.zero
+	if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+		moveVector += Vector3.new(0,1,0)
+	end
+	if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+		moveVector += Vector3.new(0,-1,0)
+	end
+
+	local targetVel = (direction + moveVector)
+	if targetVel.Magnitude > 0 then
+		targetVel = targetVel.Unit * vehicleflyspeed
+	end
+
+	-- ตรวจสิ่งกีดขวาง → warp ทันที
+	local ray = Ray.new(root.Position, targetVel.Unit * 5)
+	local hit = workspace:FindPartOnRay(ray, player.Character)
+	if hit then
+		local warpPos = root.Position + (targetVel.Unit * 20)
+		instantWarp(root, warpPos)
+	else
+		bv.Velocity = bv.Velocity:Lerp(targetVel, 0.2)
+	end
 end)
 
+-- GUI
 local function addUICorner(guiObject, cornerRadius)
-local corner = Instance.new("UICorner")
-corner.CornerRadius = cornerRadius or UDim.new(0, 6)
-corner.Parent = guiObject
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = cornerRadius or UDim.new(0, 6)
+	corner.Parent = guiObject
 end
 
-local gui = Instance.new("ScreenGui", speaker:WaitForChild("PlayerGui"))
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
@@ -87,17 +121,17 @@ local label = Instance.new("TextLabel", frame)
 label.Size = UDim2.new(0, 220, 0, 25)
 label.Position = UDim2.new(0, 0, 0, 5)
 label.BackgroundTransparency = 1
-label.Text = "gametool"
-label.TextColor3 = Color3.fromRGB(200, 200, 200)
+label.Text = "Vehicle Fly (Instant Warp)"
+label.TextColor3 = Color3.fromRGB(200,200,200)
 label.TextScaled = true
 label.Font = Enum.Font.SourceSansBold
 
 local speedBox = Instance.new("TextBox", frame)
 speedBox.Size = UDim2.new(0, 120, 0, 30)
 speedBox.Position = UDim2.new(0, 50, 0, 35)
-speedBox.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+speedBox.BackgroundColor3 = Color3.fromRGB(80,80,80)
 speedBox.Text = tostring(vehicleflyspeed)
-speedBox.TextColor3 = Color3.new(1, 1, 1)
+speedBox.TextColor3 = Color3.new(1,1,1)
 speedBox.PlaceholderText = "Speed"
 speedBox.TextScaled = true
 speedBox.ClearTextOnFocus = false
@@ -106,9 +140,9 @@ addUICorner(speedBox)
 local minusBtn = Instance.new("TextButton", frame)
 minusBtn.Size = UDim2.new(0, 40, 0, 30)
 minusBtn.Position = UDim2.new(0, 10, 0, 35)
-minusBtn.BackgroundColor3 = Color3.fromRGB(100, 50, 50)
+minusBtn.BackgroundColor3 = Color3.fromRGB(100,50,50)
 minusBtn.Text = "-"
-minusBtn.TextColor3 = Color3.new(1, 1, 1)
+minusBtn.TextColor3 = Color3.new(1,1,1)
 minusBtn.TextScaled = true
 minusBtn.Font = Enum.Font.SourceSansBold
 addUICorner(minusBtn)
@@ -116,9 +150,9 @@ addUICorner(minusBtn)
 local plusBtn = Instance.new("TextButton", frame)
 plusBtn.Size = UDim2.new(0, 40, 0, 30)
 plusBtn.Position = UDim2.new(0, 175, 0, 35)
-plusBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 50)
+plusBtn.BackgroundColor3 = Color3.fromRGB(50,100,50)
 plusBtn.Text = "+"
-plusBtn.TextColor3 = Color3.new(1, 1, 1)
+plusBtn.TextColor3 = Color3.new(1,1,1)
 plusBtn.TextScaled = true
 plusBtn.Font = Enum.Font.SourceSansBold
 addUICorner(plusBtn)
@@ -126,44 +160,41 @@ addUICorner(plusBtn)
 local toggleButton = Instance.new("TextButton", frame)
 toggleButton.Size = UDim2.new(0, 200, 0, 40)
 toggleButton.Position = UDim2.new(0, 10, 0, 75)
-toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
 toggleButton.Text = "Fly"
-toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.TextColor3 = Color3.new(1,1,1)
 toggleButton.TextScaled = true
 addUICorner(toggleButton)
 
+-- GUI logic
 local function updateSpeed(newSpeed)
-if newSpeed < 0 then newSpeed = 0 end
-vehicleflyspeed = newSpeed
-speedBox.Text = tostring(newSpeed)
+	if newSpeed < 0 then newSpeed = 0 end
+	vehicleflyspeed = newSpeed
+	speedBox.Text = tostring(newSpeed)
 end
 
 minusBtn.MouseButton1Click:Connect(function()
-local current = tonumber(speedBox.Text) or vehicleflyspeed
-updateSpeed(current - 1)
+	local current = tonumber(speedBox.Text) or vehicleflyspeed
+	updateSpeed(current - 50)
 end)
 
 plusBtn.MouseButton1Click:Connect(function()
-local current = tonumber(speedBox.Text) or vehicleflyspeed
-updateSpeed(current + 1)
+	local current = tonumber(speedBox.Text) or vehicleflyspeed
+	updateSpeed(current + 50)
 end)
 
 speedBox.FocusLost:Connect(function()
-local val = tonumber(speedBox.Text)
-if val then
-updateSpeed(val)
-else
-speedBox.Text = tostring(vehicleflyspeed)
-end
+	local val = tonumber(speedBox.Text)
+	if val then updateSpeed(val) else speedBox.Text = tostring(vehicleflyspeed) end
 end)
 
 toggleButton.MouseButton1Click:Connect(function()
-flying = not flying
-if flying then
-startFly()
-toggleButton.Text = "UnFly"
-else
-stopFly()
-toggleButton.Text = "Fly"
-end
+	flying = not flying
+	if flying then
+		startFly()
+		toggleButton.Text = "UnFly"
+	else
+		stopFly()
+		toggleButton.Text = "Fly"
+	end
 end)
