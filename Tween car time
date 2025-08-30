@@ -1,8 +1,13 @@
+_G.Toolgametimp = true
+local tweenTime = 2
+local targetPosition = Vector3.new(0, 100, 0)
+
 local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local root = character:WaitForChild("HumanoidRootPart")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local activeTweens = {}
 
 local function getSeat()
     for _, seat in pairs(workspace:GetDescendants()) do
@@ -12,49 +17,31 @@ local function getSeat()
     end
 end
 
-local seat = getSeat()
-
--- ปิดแรงโน้มถ่วงชั่วคราว
-root.Anchored = true
-if seat then
-    local seatModel = seat.Parent
-    for _, part in pairs(seatModel:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Anchored = true
-        end
-    end
+local function tweenPart(part, destination)
+    if not _G.Toolgametime then return end
+    local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local tween = TweenService:Create(part, tweenInfo, {CFrame = CFrame.new(destination)})
+    tween:Play()
+    table.insert(activeTweens, tween)
 end
 
-local tweenInfo = TweenInfo.new(
-    2, 
-    Enum.EasingStyle.Quad,
-    Enum.EasingDirection.Out
-)
-
-local goalCFrame = CFrame.new(0,100,0)
-local goal = {CFrame = goalCFrame}
-
-local tween = TweenService:Create(root, tweenInfo, goal)
-tween:Play()
-
-if seat then
-    local seatModel = seat.Parent
-    for _, part in pairs(seatModel:GetDescendants()) do
-        if part:IsA("BasePart") then
-            local partTween = TweenService:Create(part, tweenInfo, {CFrame = goalCFrame})
-            partTween:Play()
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not _G.Toolgametime then
+        for _, tween in pairs(activeTweens) do
+            tween:Cancel()
         end
-    end
-end
-
-tween.Completed:Connect(function()
-    root.Anchored = false
-    if seat then
-        local seatModel = seat.Parent
-        for _, part in pairs(seatModel:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Anchored = false
-            end
-        end
+        activeTweens = {}
     end
 end)
+
+tweenPart(hrp, targetPosition)
+
+local seat = getSeat()
+if seat then
+    local model = seat.Parent or seat
+    for _, part in pairs(model:GetDescendants()) do
+        if part:IsA("BasePart") then
+            tweenPart(part, targetPosition)
+        end
+    end
+end
