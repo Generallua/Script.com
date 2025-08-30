@@ -1,4 +1,4 @@
-_G.TweenEnabled = true
+_G.ToolgameSpeed = true
 local speed = 300
 local targetPosition = Vector3.new(0, 100, 0)
 
@@ -18,7 +18,7 @@ local function getSeat()
 end
 
 local function tweenPart(part, destination)
-    if not _G.TweenEnabled then return end
+    if not _G.ToolgameSpeed then return end
     local distance = (part.Position - destination).Magnitude
     local time = distance / speed
     local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
@@ -28,7 +28,7 @@ local function tweenPart(part, destination)
 end
 
 game:GetService("RunService").RenderStepped:Connect(function()
-    if not _G.TweenEnabled then
+    if not _G.ToolgameSpeed then
         for _, tween in pairs(activeTweens) do
             tween:Cancel()
         end
