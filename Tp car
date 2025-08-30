@@ -1,0 +1,42 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local character = LocalPlayer.Character
+
+if not character then return end
+local root = character:FindFirstChild("HumanoidRootPart")
+if not root then return end
+
+local targetPosition = Vector3.new(0, 100, 0)
+
+
+local function getSeat()
+    if character then
+        for _, seat in pairs(workspace:GetDescendants()) do
+            if (seat:IsA("Seat") or seat:IsA("VehicleSeat")) and seat.Occupant == character:FindFirstChild("Humanoid") then
+                return seat
+            end
+        end
+    end
+end
+
+local seat = getSeat()
+
+
+if seat then
+    
+    root.CFrame = CFrame.new(targetPosition)
+
+    local model = seat.Parent
+    if model then
+        for _, part in pairs(model:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CFrame = CFrame.new(targetPosition)
+            end
+        end
+    else
+        seat.CFrame = CFrame.new(targetPosition)
+    end
+else
+
+    root.CFrame = CFrame.new(targetPosition)
+end
