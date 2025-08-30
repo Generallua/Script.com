@@ -1,0 +1,60 @@
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local root = character:WaitForChild("HumanoidRootPart")
+
+local function getSeat()
+    for _, seat in pairs(workspace:GetDescendants()) do
+        if (seat:IsA("Seat") or seat:IsA("VehicleSeat")) and seat.Occupant == character:FindFirstChild("Humanoid") then
+            return seat
+        end
+    end
+end
+
+local seat = getSeat()
+
+-- ปิดแรงโน้มถ่วงชั่วคราว
+root.Anchored = true
+if seat then
+    local seatModel = seat.Parent
+    for _, part in pairs(seatModel:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Anchored = true
+        end
+    end
+end
+
+local tweenInfo = TweenInfo.new(
+    2, 
+    Enum.EasingStyle.Quad,
+    Enum.EasingDirection.Out
+)
+
+local goalCFrame = CFrame.new(0,100,0)
+local goal = {CFrame = goalCFrame}
+
+local tween = TweenService:Create(root, tweenInfo, goal)
+tween:Play()
+
+if seat then
+    local seatModel = seat.Parent
+    for _, part in pairs(seatModel:GetDescendants()) do
+        if part:IsA("BasePart") then
+            local partTween = TweenService:Create(part, tweenInfo, {CFrame = goalCFrame})
+            partTween:Play()
+        end
+    end
+end
+
+tween.Completed:Connect(function()
+    root.Anchored = false
+    if seat then
+        local seatModel = seat.Parent
+        for _, part in pairs(seatModel:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Anchored = false
+            end
+        end
+    end
+end)
