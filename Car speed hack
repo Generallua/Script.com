@@ -105,7 +105,6 @@ toggleBtn.MouseButton1Click:Connect(function()
     end  
 end)  
 
--- Dragging
 local UIS = game:GetService("UserInputService")  
 local dragging = false  
 local dragStart, startPos  
@@ -134,13 +133,11 @@ UIS.InputChanged:Connect(function(input)
     end  
 end)  
 
--- ค่าเริ่มต้น
 local forcePower, maxSpeed = 20, 300
 local throttleBtn, brakeBtn
 local pressingThrottle, pressingBrake = false,false
 local run = game:GetService("RunService")
 
--- TextBox อัปเดตแบบเรียลไทม์
 forceBox:GetPropertyChangedSignal("Text"):Connect(function()
     local val = tonumber(forceBox.Text)
     if val then forcePower = val end
@@ -151,7 +148,6 @@ speedBox:GetPropertyChangedSignal("Text"):Connect(function()
     if val then maxSpeed = val end
 end)
 
--- ปุ่มคันเร่งและเบรก
 local function createButton(name, text, position)
     local btn = Instance.new("TextButton")
     btn.Name = name
@@ -168,15 +164,29 @@ local function createButton(name, text, position)
 end
 
 local function createPedals()
-    -- คันเร่งตำแหน่งเดิม
     throttleBtn = createButton("Throttle","▲",UDim2.new(1,-140,1,-140))
-    -- เบรกอยู่ข้างๆ คันเร่งเว้นระยะ 10 px
     brakeBtn = createButton("Brake","▼",UDim2.new(1,-260,1,-140))
 
-    throttleBtn.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingThrottle=true end end)
-    throttleBtn.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingThrottle=false end end)
-    brakeBtn.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingBrake=true end end)
-    brakeBtn.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingBrake=false end end)
+    throttleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            pressingThrottle=true
+        end
+    end)
+    throttleBtn.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            pressingThrottle=false
+        end
+    end)
+    brakeBtn.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            pressingBrake=true
+        end
+    end)
+    brakeBtn.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+            pressingBrake=false
+        end
+    end)
 end
 
 local function removePedals()
@@ -200,7 +210,6 @@ startBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- การเคลื่อนที่
 run.RenderStepped:Connect(function()
     if not started then return end
     local plr=game.Players.LocalPlayer
@@ -209,13 +218,25 @@ run.RenderStepped:Connect(function()
     if root then
         local vel=root.Velocity
         local flatVel=Vector3.new(vel.X,0,vel.Z)
-        local speed=flatVel.Magnitude
-        if pressingThrottle and speed<maxSpeed then
-            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z).Unit
-            root.Velocity=vel+dir*forcePower
-        elseif pressingBrake and speed<maxSpeed then
-            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z).Unit
-            root.Velocity=vel-dir*forcePower
+
+        if pressingThrottle then
+            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+            dir=dir.Magnitude>0 and dir.Unit or Vector3.new(0,0,0)
+            local newFlatVel=flatVel+dir*forcePower
+            if newFlatVel.Magnitude>maxSpeed then
+                newFlatVel=newFlatVel.Unit*maxSpeed
+            end
+            root.Velocity=Vector3.new(newFlatVel.X,vel.Y,newFlatVel.Z)
+        end
+
+        if pressingBrake then
+            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+            dir=dir.Magnitude>0 and dir.Unit or Vector3.new(0,0,0)
+            local newFlatVel=flatVel-dir*forcePower
+            if newFlatVel.Magnitude>maxSpeed then
+                newFlatVel=newFlatVel.Unit*maxSpeed
+            end
+            root.Velocity=Vector3.new(newFlatVel.X,vel.Y,newFlatVel.Z)
         end
     end
 end)
