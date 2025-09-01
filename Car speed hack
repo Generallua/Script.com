@@ -61,8 +61,9 @@ content.Parent = mainFrame
 local forceBox = Instance.new("TextBox")  
 forceBox.Size = UDim2.new(1,-20,0,30)  
 forceBox.Position = UDim2.new(0,10,0,10)  
-forceBox.PlaceholderText = "Force (Default:20)"  
+forceBox.PlaceholderText = "Force (Default:0)"  
 forceBox.Text = ""  
+forceBox.ClearTextOnFocus = false
 forceBox.BackgroundColor3 = Color3.fromRGB(50,50,50)  
 forceBox.TextColor3 = Color3.fromRGB(255,255,255)  
 forceBox.Font = Enum.Font.SourceSans  
@@ -73,8 +74,9 @@ Instance.new("UICorner", forceBox).CornerRadius = UDim.new(0,6)
 local speedBox = Instance.new("TextBox")  
 speedBox.Size = UDim2.new(1,-20,0,30)  
 speedBox.Position = UDim2.new(0,10,0,50)  
-speedBox.PlaceholderText = "MaxSpeed (Default:300)"  
+speedBox.PlaceholderText = "MaxSpeed (Default:0)"  
 speedBox.Text = ""  
+speedBox.ClearTextOnFocus = false
 speedBox.BackgroundColor3 = Color3.fromRGB(50,50,50)  
 speedBox.TextColor3 = Color3.fromRGB(255,255,255)  
 speedBox.Font = Enum.Font.SourceSans  
@@ -133,19 +135,19 @@ UIS.InputChanged:Connect(function(input)
     end  
 end)  
 
-local forcePower, maxSpeed = 20, 300
+local forcePower, maxSpeed = 0, 0
 local throttleBtn, brakeBtn
 local pressingThrottle, pressingBrake = false,false
 local run = game:GetService("RunService")
 
 forceBox:GetPropertyChangedSignal("Text"):Connect(function()
     local val = tonumber(forceBox.Text)
-    if val then forcePower = val end
+    if val then forcePower = val else forcePower = 0 end
 end)
 
 speedBox:GetPropertyChangedSignal("Text"):Connect(function()
     local val = tonumber(speedBox.Text)
-    if val then maxSpeed = val end
+    if val then maxSpeed = val else maxSpeed = 0 end
 end)
 
 local function createButton(name, text, position)
@@ -212,31 +214,32 @@ end)
 
 run.RenderStepped:Connect(function()
     if not started then return end
-    local plr=game.Players.LocalPlayer
-    local char=plr.Character
-    local root=char and char:FindFirstChild("HumanoidRootPart")
+    local plr = game.Players.LocalPlayer
+    local char = plr.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
     if root then
-        local vel=root.Velocity
-        local flatVel=Vector3.new(vel.X,0,vel.Z)
+        local vel = root.Velocity
+        local flatVel = Vector3.new(vel.X,0,vel.Z)
+        local currentMaxSpeed = tonumber(speedBox.Text) or maxSpeed
 
         if pressingThrottle then
-            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
-            dir=dir.Magnitude>0 and dir.Unit or Vector3.new(0,0,0)
-            local newFlatVel=flatVel+dir*forcePower
-            if newFlatVel.Magnitude>maxSpeed then
-                newFlatVel=newFlatVel.Unit*maxSpeed
+            local dir = Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+            dir = dir.Magnitude>0 and dir.Unit or Vector3.new(0,0,0)
+            local newFlatVel = flatVel + dir*forcePower
+            if currentMaxSpeed>0 and newFlatVel.Magnitude > currentMaxSpeed then
+                newFlatVel = newFlatVel.Unit*currentMaxSpeed
             end
-            root.Velocity=Vector3.new(newFlatVel.X,vel.Y,newFlatVel.Z)
+            root.Velocity = Vector3.new(newFlatVel.X, vel.Y, newFlatVel.Z)
         end
 
         if pressingBrake then
-            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
-            dir=dir.Magnitude>0 and dir.Unit or Vector3.new(0,0,0)
-            local newFlatVel=flatVel-dir*forcePower
-            if newFlatVel.Magnitude>maxSpeed then
-                newFlatVel=newFlatVel.Unit*maxSpeed
+            local dir = Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z)
+            dir = dir.Magnitude>0 and dir.Unit or Vector3.new(0,0,0)
+            local newFlatVel = flatVel - dir*forcePower
+            if currentMaxSpeed>0 and newFlatVel.Magnitude > currentMaxSpeed then
+                newFlatVel = newFlatVel.Unit*currentMaxSpeed
             end
-            root.Velocity=Vector3.new(newFlatVel.X,vel.Y,newFlatVel.Z)
+            root.Velocity = Vector3.new(newFlatVel.X, vel.Y, newFlatVel.Z)
         end
     end
 end)
