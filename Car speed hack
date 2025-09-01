@@ -1,0 +1,221 @@
+if game.CoreGui:FindFirstChild("ControlUI") then  
+    game.CoreGui.ControlUI:Destroy()  
+end  
+
+local player = game.Players.LocalPlayer  
+local gui = Instance.new("ScreenGui")  
+gui.Name = "ControlUI"  
+gui.Parent = game.CoreGui  
+
+local mainFrame = Instance.new("Frame")  
+mainFrame.Size = UDim2.new(0,220,0,160)  
+mainFrame.Position = UDim2.new(0,20,0.5,-300)  
+mainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)  
+mainFrame.BorderSizePixel = 0  
+mainFrame.Parent = gui  
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0,12)  
+
+local shadow = Instance.new("ImageLabel")  
+shadow.Size = UDim2.new(1,20,1,20)  
+shadow.Position = UDim2.new(0,-10,0,-10)  
+shadow.BackgroundTransparency = 1  
+shadow.Image = "rbxassetid://1316045217"  
+shadow.ImageColor3 = Color3.fromRGB(0,0,0)  
+shadow.ImageTransparency = 0.3  
+shadow.Parent = mainFrame  
+
+local header = Instance.new("Frame")  
+header.Size = UDim2.new(1,0,0,35)  
+header.BackgroundColor3 = Color3.fromRGB(45,45,45)  
+header.Parent = mainFrame  
+Instance.new("UICorner", header).CornerRadius = UDim.new(0,12)  
+
+local title = Instance.new("TextLabel")  
+title.Size = UDim2.new(1,-40,1,0)  
+title.Position = UDim2.new(0,10,0,0)  
+title.BackgroundTransparency = 1  
+title.Text = "Control Panel"  
+title.TextColor3 = Color3.fromRGB(255,255,255)  
+title.Font = Enum.Font.SourceSansBold  
+title.TextSize = 18  
+title.TextXAlignment = Enum.TextXAlignment.Left  
+title.Parent = header  
+
+local toggleBtn = Instance.new("TextButton")  
+toggleBtn.Size = UDim2.new(0,30,0,30)  
+toggleBtn.Position = UDim2.new(1,-35,0.5,-15)  
+toggleBtn.Text = "<>"  
+toggleBtn.Font = Enum.Font.SourceSansBold  
+toggleBtn.TextSize = 16  
+toggleBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)  
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)  
+toggleBtn.Parent = header  
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0,6)  
+
+local content = Instance.new("Frame")  
+content.Size = UDim2.new(1,0,1,-35)  
+content.Position = UDim2.new(0,0,0,35)  
+content.BackgroundTransparency = 1  
+content.Parent = mainFrame  
+
+local forceBox = Instance.new("TextBox")  
+forceBox.Size = UDim2.new(1,-20,0,30)  
+forceBox.Position = UDim2.new(0,10,0,10)  
+forceBox.PlaceholderText = "Force (Default:20)"  
+forceBox.Text = ""  
+forceBox.BackgroundColor3 = Color3.fromRGB(50,50,50)  
+forceBox.TextColor3 = Color3.fromRGB(255,255,255)  
+forceBox.Font = Enum.Font.SourceSans  
+forceBox.TextSize = 16  
+forceBox.Parent = content  
+Instance.new("UICorner", forceBox).CornerRadius = UDim.new(0,6)  
+
+local speedBox = Instance.new("TextBox")  
+speedBox.Size = UDim2.new(1,-20,0,30)  
+speedBox.Position = UDim2.new(0,10,0,50)  
+speedBox.PlaceholderText = "MaxSpeed (Default:300)"  
+speedBox.Text = ""  
+speedBox.BackgroundColor3 = Color3.fromRGB(50,50,50)  
+speedBox.TextColor3 = Color3.fromRGB(255,255,255)  
+speedBox.Font = Enum.Font.SourceSans  
+speedBox.TextSize = 16  
+speedBox.Parent = content  
+Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0,6)  
+
+local startBtn = Instance.new("TextButton")  
+startBtn.Size = UDim2.new(1,-20,0,35)  
+startBtn.Position = UDim2.new(0,10,0,90)  
+startBtn.Text = "Start"  
+startBtn.Font = Enum.Font.SourceSansBold  
+startBtn.TextSize = 18  
+startBtn.BackgroundColor3 = Color3.fromRGB(80,130,80)  
+startBtn.TextColor3 = Color3.fromRGB(255,255,255)  
+startBtn.Parent = content  
+Instance.new("UICorner", startBtn).CornerRadius = UDim.new(0,8)  
+
+local collapsed = false  
+toggleBtn.MouseButton1Click:Connect(function()  
+    collapsed = not collapsed  
+    if collapsed then  
+        content.Visible = false  
+        mainFrame.Size = UDim2.new(0,220,0,35)  
+    else  
+        content.Visible = true  
+        mainFrame.Size = UDim2.new(0,220,0,160)  
+    end  
+end)  
+
+-- Dragging
+local UIS = game:GetService("UserInputService")  
+local dragging = false  
+local dragStart, startPos  
+header.InputBegan:Connect(function(input)  
+    if input.UserInputType == Enum.UserInputType.Touch then  
+        dragging = true  
+        dragStart = input.Position  
+        startPos = mainFrame.Position  
+        input.Changed:Connect(function()  
+            if input.UserInputState == Enum.UserInputState.End then  
+                dragging = false  
+            end  
+        end)  
+    end  
+end)  
+UIS.InputChanged:Connect(function(input)  
+    if dragging and input.UserInputType == Enum.UserInputType.Touch then  
+        local delta = input.Position - dragStart  
+        local newX = startPos.X.Offset + delta.X  
+        local newY = startPos.Y.Offset + delta.Y  
+        local screen = workspace.CurrentCamera.ViewportSize  
+        local frameSize = mainFrame.AbsoluteSize  
+        newX = math.clamp(newX, 0, screen.X - frameSize.X)  
+        newY = math.clamp(newY, 0, screen.Y - frameSize.Y)  
+        mainFrame.Position = UDim2.new(0, newX, 0, newY)  
+    end  
+end)  
+
+-- ค่าเริ่มต้น
+local forcePower, maxSpeed = 20, 300
+local throttleBtn, brakeBtn
+local pressingThrottle, pressingBrake = false,false
+local run = game:GetService("RunService")
+
+-- TextBox อัปเดตแบบเรียลไทม์
+forceBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local val = tonumber(forceBox.Text)
+    if val then forcePower = val end
+end)
+
+speedBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local val = tonumber(speedBox.Text)
+    if val then maxSpeed = val end
+end)
+
+-- ปุ่มคันเร่งและเบรก
+local function createButton(name, text, position)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Text = text
+    btn.Size = UDim2.new(0,120,0,120)
+    btn.Position = position
+    btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 22
+    btn.Parent = gui
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,60)
+    return btn
+end
+
+local function createPedals()
+    -- คันเร่งตำแหน่งเดิม
+    throttleBtn = createButton("Throttle","▲",UDim2.new(1,-140,1,-140))
+    -- เบรกอยู่ข้างๆ คันเร่งเว้นระยะ 10 px
+    brakeBtn = createButton("Brake","▼",UDim2.new(1,-260,1,-140))
+
+    throttleBtn.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingThrottle=true end end)
+    throttleBtn.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingThrottle=false end end)
+    brakeBtn.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingBrake=true end end)
+    brakeBtn.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch then pressingBrake=false end end)
+end
+
+local function removePedals()
+    if throttleBtn then throttleBtn:Destroy() throttleBtn=nil end
+    if brakeBtn then brakeBtn:Destroy() brakeBtn=nil end
+    pressingThrottle, pressingBrake=false,false
+end
+
+local started = false
+startBtn.MouseButton1Click:Connect(function()
+    if not started then
+        createPedals()
+        startBtn.Text="Stop"
+        startBtn.BackgroundColor3=Color3.fromRGB(150,70,70)
+        started=true
+    else
+        removePedals()
+        startBtn.Text="Start"
+        startBtn.BackgroundColor3=Color3.fromRGB(80,130,80)
+        started=false
+    end
+end)
+
+-- การเคลื่อนที่
+run.RenderStepped:Connect(function()
+    if not started then return end
+    local plr=game.Players.LocalPlayer
+    local char=plr.Character
+    local root=char and char:FindFirstChild("HumanoidRootPart")
+    if root then
+        local vel=root.Velocity
+        local flatVel=Vector3.new(vel.X,0,vel.Z)
+        local speed=flatVel.Magnitude
+        if pressingThrottle and speed<maxSpeed then
+            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z).Unit
+            root.Velocity=vel+dir*forcePower
+        elseif pressingBrake and speed<maxSpeed then
+            local dir=Vector3.new(root.CFrame.LookVector.X,0,root.CFrame.LookVector.Z).Unit
+            root.Velocity=vel-dir*forcePower
+        end
+    end
+end)
