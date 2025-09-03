@@ -1,3 +1,5 @@
+loadstring(game:HttpGet("https://github.com/Generallua/Script.com/raw/refs/heads/main/Esp"))()
+
 if _G.Sharkout then
     local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
@@ -68,7 +70,7 @@ toggleButton.Parent = header
 Instance.new("UICorner", toggleButton).CornerRadius = UDim.new(0, 8)
 
 local bodyFrame = Instance.new("Frame")
-bodyFrame.Size = UDim2.new(1, 0, 1, -30)
+bodyFrame.Size = UDim2.new(1, 0, 1, -31)
 bodyFrame.Position = UDim2.new(0, 0, 0, 30)
 bodyFrame.BackgroundTransparency = 1
 bodyFrame.Parent = mainFrame
