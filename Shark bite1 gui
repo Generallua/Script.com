@@ -1,263 +1,71 @@
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
-if playerGui:FindFirstChild("CompactGUI") then
-    playerGui.CompactGUI:Destroy()
-end
-
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "CompactGUI"
-screenGui.Parent = playerGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 180, 0, 280)
-mainFrame.Position = UDim2.new(0, 20, 0, 50)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
-
-local mainUICorner = Instance.new("UICorner")
-mainUICorner.CornerRadius = UDim.new(0, 8)
-mainUICorner.Parent = mainFrame
-
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(255, 255, 255)
-stroke.Thickness = 2
-stroke.Parent = mainFrame
-
-local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 30)
-header.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-header.BorderSizePixel = 0
-header.Parent = mainFrame
-
-local headerCorner = Instance.new("UICorner")
-headerCorner.CornerRadius = UDim.new(0, 8)
-headerCorner.Parent = header
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -30, 1, 0)
-title.Position = UDim2.new(0, 30, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "Shark Bite1"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 18
-title.Parent = header
-
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 30, 1, 0)
-toggleButton.Position = UDim2.new(0, 0, 0, 0)
-toggleButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.Font = Enum.Font.SourceSansBold
-toggleButton.TextSize = 18
-toggleButton.Text = "<>"
-toggleButton.Parent = header
-
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 8)
-toggleCorner.Parent = toggleButton
-
-local bodyFrame = Instance.new("Frame")
-bodyFrame.Size = UDim2.new(1, 0, 1, -30)
-bodyFrame.Position = UDim2.new(0, 0, 0, 30)
-bodyFrame.BackgroundTransparency = 1
-bodyFrame.Parent = mainFrame
-
-local function createButton(name, position, size, onOpenFunc, onCloseFunc)
-    local button = Instance.new("TextButton")
-    button.Name = name
-    button.Size = size
-    button.Position = position
-    button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-    button.BorderSizePixel = 0
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.SourceSansBold
-    button.TextSize = 16
-    button.Text = name .. ": OFF"
-    button.Parent = bodyFrame
-
-    local buttonCorner = Instance.new("UICorner")
-    buttonCorner.CornerRadius = UDim.new(0, 6)
-    buttonCorner.Parent = button
-
-    local toggled = false
-    button.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        if toggled then
-            button.Text = name .. ": ON"
-            if onOpenFunc then
-                pcall(onOpenFunc)
-            end
-        else
-            button.Text = name .. ": OFF"
-            if onCloseFunc then
-                pcall(onCloseFunc)
-            end
-        end
-    end)
-end
-
-createButton("safe zone", UDim2.new(0, 15, 0, 10), UDim2.new(0, 150, 0, 40),
-    function() _G.Tp = true 
-while _G.Tp do wait(5)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(45.66017532348633, 251.29685974121094, 112.10118103027344)
-end
- end,
-    function() _G.Tp = false 
-wait(10)
-game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(17.029125213623047, 285.9269714355469, -31.104093551635742, -0.9986627101898193, 1.5945364140179663e-08, 0.05169857293367386, 1.9507783832750647e-08, 1, 6.840291177923064e-08, -0.05169857293367386, 6.931995955028469e-08, -0.9986627101898193)
-end
-)
-
-createButton("Shark", UDim2.new(0, 15, 0, 60), UDim2.new(0, 150, 0, 40),
-    function() _G.Shark = true 
-while _G.Shark do wait(0)
-local TweenService = game:GetService("TweenService")
-local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
-local targetPos = Vector3.new(6, 306, 16)
-
-local tweenInfo = TweenInfo.new(1/929, Enum.EasingStyle.Linear)
-
-if player.Team and player.Team.Name == "Survivor" then
-    local sharks = workspace:WaitForChild("Sharks"):GetChildren()
-    local closest, dist = nil, math.huge
-
-    for _, shark in ipairs(sharks) do
-        if shark:IsA("Model") then
-            local mainPart = shark.PrimaryPart or shark:FindFirstChildWhichIsA("BasePart")
-            if mainPart then
-                local d = (mainPart.Position - targetPos).Magnitude
-                if d < dist then
-                    dist = d
-                    closest = mainPart
+    _G.hapoon = true
+    runOnRespawn(function()
+        spawn(function()
+            while _G.hapoon do
+                wait(0.1)
+                local backpack = player:FindFirstChild("Backpack")
+                if backpack and player.Character and player.Character:FindFirstChild("Humanoid") then
+                    for _, tool in ipairs(backpack:GetChildren()) do
+if tool:IsA("Tool") and tool.Name:lower():find("harpoon") then
+                            player.Character.Humanoid:EquipTool(tool)
+                            break
+                        end
+                    end
                 end
             end
-        end
-    end
-
-    if closest then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
-        local targetCFrame = closest.CFrame * CFrame.new(0, 30, -20)
-        local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
-        tween:Play()
-    end
-end
-end
- end,
-    function() _G.Shark = false end
-)
-
-createButton("auto shoot", UDim2.new(0, 15, 0, 110), UDim2.new(0, 150, 0, 40),
-    function() _G.hit = true 
-while _G.hit do wait(0.1)
-local player = game:GetService("Players").LocalPlayer
-local gui = player:WaitForChild("PlayerGui")
-
-local shootButton = gui:WaitForChild("WeaponDisplay"):WaitForChild("Frame"):WaitForChild("ShootButton")
-
-firesignal(shootButton.MouseButton1Click)
-firesignal(shootButton.MouseButton1Down)
-firesignal(shootButton.MouseButton1Up)
-firesignal(shootButton.Activated)
-firesignal(shootButton.TouchTap)
-end
- end,
-    function() _G.hit = false end
-)
-
-createButton("auto equip", UDim2.new(0, 15, 0, 160), UDim2.new(0, 150, 0, 40),
-    function() _G.hapoon = true 
-while _G.hapoon do wait(0.1)
-local player = game.Players.LocalPlayer
-local backpack = player:WaitForChild("Backpack")
-
-for _, tool in ipairs(backpack:GetChildren()) do
-    if tool:IsA("Tool") and tool.Name:lower():find("harpoon") then
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid:EquipTool(tool)
-        end
-        break
-    end
-end
-end
- end,
-    function() _G.hapoon = false end
-)
+        end)
+    end)
+end,
+function() _G.hapoon = false end)
 
 createButton("inf", UDim2.new(0, 15, 0, 210), UDim2.new(0, 150, 0, 40),
-    function() _G.inf = true 
-while _G.inf do wait(1)
-local aux = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Upbolt/Hydroxide/revision/ohaux.lua"))()
-
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local harpoonScript = character:WaitForChild("Harpoon"):WaitForChild("LocalScript")
-
-local closureName = "reload"
-local upvalueIndex = 4
-local closureConstants = {
-    [1] = "Enum",
-    [2] = "UserInputState",
-    [3] = "Cancel",
-    [4] = Enum.UserInputState.Cancel,
-    [5] = 1,
-    [6] = "script"
-}
-
-local closure = aux.searchClosure(harpoonScript, closureName, upvalueIndex, closureConstants)
-local value = 9e999
-
-debug.setupvalue(closure, upvalueIndex, value)
-end end,
-    function() _G.inf = false end
-)
+function()
+    _G.inf = true
+    runOnRespawn(function()
+        spawn(function()
+            while _G.inf do
+                wait(1)
+                local aux = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Upbolt/Hydroxide/revision/ohaux.lua"))()
+                local char = player.Character
+                if char and char:FindFirstChild("Harpoon") then
+                    local harpoonScript = char.Harpoon:FindFirstChild("LocalScript")
+                    if harpoonScript then
+                        local closure = aux.searchClosure(harpoonScript, "reload", 4, {"Enum","UserInputState","Cancel",Enum.UserInputState.Cancel,1,"script"})
+                        debug.setupvalue(closure, 4, 9e999)
+                    end
+                end
+            end
+        end)
+    end)
+end,
+function() _G.inf = false end)
 
 local collapsed = false
 toggleButton.MouseButton1Click:Connect(function()
     collapsed = not collapsed
     bodyFrame.Visible = not collapsed
-    if collapsed then
-        mainFrame.Size = UDim2.new(0, 180, 0, 30)
-    else
-        mainFrame.Size = UDim2.new(0, 180, 0, 280)
-    end
+    mainFrame.Size = collapsed and UDim2.new(0, 180, 0, 30) or UDim2.new(0, 180, 0, 280)
 end)
 
--- ฟังก์ชันลาก GUI สำหรับ Mouse และ Touch
-local dragging = false
-local dragInput, startPos, startPosFrame
-
+local dragging, dragInput, startPos, startPosFrame = false, nil, nil, nil
 local function startDrag(input)
     dragging = true
     startPos = input.Position
     startPosFrame = mainFrame.Position
     input.Changed:Connect(function()
-        if input.UserInputState == Enum.UserInputState.End then
-            dragging = false
-        end
+        if input.UserInputState == Enum.UserInputState.End then dragging = false end
     end)
 end
-
 header.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         startDrag(input)
     end
 end)
-
 header.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
         dragInput = input
     end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
     if dragging and input == dragInput then
         local delta = input.Position - startPos
