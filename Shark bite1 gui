@@ -15,6 +15,7 @@ spawn(function()
     end
 end)
 end
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -75,6 +76,14 @@ bodyFrame.Position = UDim2.new(0, 0, 0, 30)
 bodyFrame.BackgroundTransparency = 1
 bodyFrame.Parent = mainFrame
 
+local function runOnRespawn(func)
+    local function runner(character)
+        func()
+    end
+    if player.Character then runner(player.Character) end
+    player.CharacterAdded:Connect(runner)
+end
+
 local function createButton(name, position, size, onOpenFunc, onCloseFunc)
     local button = Instance.new("TextButton")
     button.Name = name
@@ -99,17 +108,13 @@ local function createButton(name, position, size, onOpenFunc, onCloseFunc)
             onCloseFunc()
         end
     end)
+
+    return button
 end
 
-local function runOnRespawn(func)
-    local function runner(character)
-        func()
-    end
-    if player.Character then runner(player.Character) end
-    player.CharacterAdded:Connect(runner)
-end
+local buttons = {}
 
-createButton("safe zone", UDim2.new(0, 15, 0, 10), UDim2.new(0, 150, 0, 40),
+buttons["safe zone"] = createButton("safe zone", UDim2.new(0, 15, 0, 10), UDim2.new(0, 150, 0, 40),
 function()
     _G.Tp = true
     runOnRespawn(function()
@@ -126,12 +131,12 @@ end,
 function()
     _G.Tp = false
     wait(1.5)
-if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(17.02, 285.92, -31.10)
     end
 end)
 
-createButton("Shark", UDim2.new(0, 15, 0, 60), UDim2.new(0, 150, 0, 40),
+buttons["Shark"] = createButton("Shark", UDim2.new(0, 15, 0, 60), UDim2.new(0, 150, 0, 40),
 function()
     _G.Shark = true
     runOnRespawn(function()
@@ -184,12 +189,12 @@ function()
 end,
 function() _G.Shark = false end)
 
-createButton("auto shoot", UDim2.new(0, 15, 0, 110), UDim2.new(0, 150, 0, 40),
+buttons["auto shoot"] = createButton("auto shoot", UDim2.new(0, 15, 0, 110), UDim2.new(0, 150, 0, 40),
 function()
     _G.hit = true
     runOnRespawn(function()
         spawn(function()
-while _G.hit do
+            while _G.hit do
                 wait(0.1)
                 local gui = player:FindFirstChild("PlayerGui")
                 if gui and gui:FindFirstChild("WeaponDisplay") then
@@ -208,7 +213,7 @@ while _G.hit do
 end,
 function() _G.hit = false end)
 
-createButton("auto equip", UDim2.new(0, 15, 0, 160), UDim2.new(0, 150, 0, 40),
+buttons["auto equip"] = createButton("auto equip", UDim2.new(0, 15, 0, 160), UDim2.new(0, 150, 0, 40),
 function()
     _G.hapoon = true
     runOnRespawn(function()
@@ -230,7 +235,7 @@ function()
 end,
 function() _G.hapoon = false end)
 
-createButton("inf", UDim2.new(0, 15, 0, 210), UDim2.new(0, 150, 0, 40),
+buttons["inf"] = createButton("inf", UDim2.new(0, 15, 0, 210), UDim2.new(0, 150, 0, 40),
 function()
     _G.inf = true
     runOnRespawn(function()
@@ -252,6 +257,13 @@ function()
 end,
 function() _G.inf = false end)
 
+-- เปิดทุกปุ่มอัตโนมัติถ้า _G.farm = true
+if _G.farm then
+    for _, btn in pairs(buttons) do
+        btn:Activate()
+    end
+end
+
 local collapsed = false
 toggleButton.MouseButton1Click:Connect(function()
     collapsed = not collapsed
@@ -259,6 +271,7 @@ toggleButton.MouseButton1Click:Connect(function()
     mainFrame.Size = collapsed and UDim2.new(0, 180, 0, 30) or UDim2.new(0, 180, 0, 280)
 end)
 
+-- Dragging
 local dragging, dragInput, startPos, startPosFrame = false, nil, nil, nil
 local function startDrag(input)
     dragging = true
@@ -266,6 +279,10 @@ local function startDrag(input)
     startPosFrame = mainFrame.Position
     input.Changed:Connect(function()
         if input.UserInputState == Enum.UserInputState.End then dragging = false end
+    end)
+end
+header.InputBegan:Connect(function(input)
+    if input.UserInputState == Enum.UserInputState.End then dragging = false end
     end)
 end
 header.InputBegan:Connect(function(input)
