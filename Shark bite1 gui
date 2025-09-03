@@ -101,13 +101,16 @@ local function createButton(name, position, size, onOpenFunc, onCloseFunc)
     end)
 end
 
-createButton("เซฟโซน", UDim2.new(0, 15, 0, 10), UDim2.new(0, 150, 0, 40),
+createButton("safe zone", UDim2.new(0, 15, 0, 10), UDim2.new(0, 150, 0, 40),
     function() _G.Tp = true 
 while _G.Tp do wait(5)
 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(45.66017532348633, 251.29685974121094, 112.10118103027344)
 end
  end,
-    function() _G.Tp = false end
+    function() _G.Tp = false 
+wait(10)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(17.029125213623047, 285.9269714355469, -31.104093551635742, -0.9986627101898193, 1.5945364140179663e-08, 0.05169857293367386, 1.9507783832750647e-08, 1, 6.840291177923064e-08, -0.05169857293367386, 6.931995955028469e-08, -0.9986627101898193)
+end
 )
 
 createButton("Shark", UDim2.new(0, 15, 0, 60), UDim2.new(0, 150, 0, 40),
