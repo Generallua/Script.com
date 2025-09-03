@@ -112,3 +112,103 @@ task.spawn(function()
         end
     end
 end)
+
+--[[
+_G.Tp = true 
+while _G.Tp do wait(10)
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(45.66017532348633, 251.29685974121094, 112.10118103027344)
+end
+
+
+_G.Shark = true 
+while _G.Shark do wait(0)
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
+local targetPos = Vector3.new(6, 306, 16)
+
+local tweenInfo = TweenInfo.new(1/929, Enum.EasingStyle.Linear)
+
+if player.Team and player.Team.Name == "Survivor" then
+    local sharks = workspace:WaitForChild("Sharks"):GetChildren()
+    local closest, dist = nil, math.huge
+
+    for _, shark in ipairs(sharks) do
+        if shark:IsA("Model") then
+            local mainPart = shark.PrimaryPart or shark:FindFirstChildWhichIsA("BasePart")
+            if mainPart then
+                local d = (mainPart.Position - targetPos).Magnitude
+                if d < dist then
+                    dist = d
+                    closest = mainPart
+                end
+            end
+        end
+    end
+
+    if closest then
+        camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
+        local targetCFrame = closest.CFrame * CFrame.new(0, 30, -20)
+        local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+        tween:Play()
+    end
+end
+end
+
+_G.hit = true 
+while _G.hit do wait(0.1)
+local player = game:GetService("Players").LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+
+local shootButton = gui:WaitForChild("WeaponDisplay"):WaitForChild("Frame"):WaitForChild("ShootButton")
+
+firesignal(shootButton.MouseButton1Click)
+firesignal(shootButton.MouseButton1Down)
+firesignal(shootButton.MouseButton1Up)
+firesignal(shootButton.Activated)
+firesignal(shootButton.TouchTap)
+end
+
+
+_G.hapoon = true 
+while _G.hapoon do wait(0.1)
+local player = game.Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+
+for _, tool in ipairs(backpack:GetChildren()) do
+    if tool:IsA("Tool") and tool.Name:lower():find("harpoon") then
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid:EquipTool(tool)
+        end
+        break
+    end
+end
+end
+
+_G.inf = true 
+while _G.inf do wait(1)
+local aux = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Upbolt/Hydroxide/revision/ohaux.lua"))()
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local harpoonScript = character:WaitForChild("Harpoon"):WaitForChild("LocalScript")
+
+local closureName = "reload"
+local upvalueIndex = 4
+local closureConstants = {
+    [1] = "Enum",
+    [2] = "UserInputState",
+    [3] = "Cancel",
+    [4] = Enum.UserInputState.Cancel,
+    [5] = 1,
+    [6] = "script"
+}
+
+local closure = aux.searchClosure(harpoonScript, closureName, upvalueIndex, closureConstants)
+local value = 9e999
+
+debug.setupvalue(closure, upvalueIndex, value)
+end ]]
