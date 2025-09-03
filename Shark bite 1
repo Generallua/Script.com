@@ -1,0 +1,114 @@
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local player = Players.LocalPlayer
+
+
+local function getChar()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    return char, hrp
+end
+
+
+task.spawn(function()
+    _G.Tp = true
+    while _G.Tp do
+        task.wait(10)
+        local char, hrp = getChar()
+        hrp.CFrame = CFrame.new(45.66, 251.29, 112.10)
+    end
+end)
+
+task.spawn(function()
+    _G.Shark = true
+    while _G.Shark do
+        task.wait(0)
+        if player.Team and player.Team.Name == "Survivor" then
+            local char, hrp = getChar()
+            local camera = workspace.CurrentCamera
+            local sharks = workspace:WaitForChild("Sharks"):GetChildren()
+            local closest, dist = nil, math.huge
+            local targetPos = Vector3.new(6,306,16)
+            
+            for _, shark in ipairs(sharks) do
+                if shark:IsA("Model") then
+                    local mainPart = shark.PrimaryPart or shark:FindFirstChildWhichIsA("BasePart")
+                    if mainPart then
+                        local d = (mainPart.Position - targetPos).Magnitude
+                        if d < dist then
+                            dist = d
+                            closest = mainPart
+                        end
+                    end
+                end
+            end
+            
+            if closest then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, closest.Position)
+                local targetCFrame = closest.CFrame * CFrame.new(0,30,-20)
+                local tween = TweenService:Create(hrp, TweenInfo.new(1/929, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+                tween:Play()
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    _G.hit = true
+    while _G.hit do
+        task.wait(0.1)
+        local gui = player:FindFirstChild("PlayerGui")
+        if gui then
+            local shootButton = gui:FindFirstChild("WeaponDisplay") and gui.WeaponDisplay.Frame:FindFirstChild("ShootButton")
+            if shootButton then
+                for _, signal in ipairs({"MouseButton1Click","MouseButton1Down","MouseButton1Up","Activated","TouchTap"}) do
+                    pcall(firesignal, shootButton[signal])
+                end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    _G.hapoon = true
+    while _G.hapoon do
+        task.wait(0.1)
+        local char, hrp = getChar()
+        local backpack = player:FindFirstChild("Backpack")
+        if backpack then
+            for _, tool in ipairs(backpack:GetChildren()) do
+                if tool:IsA("Tool") and tool.Name:lower():find("harpoon") then
+                    if char:FindFirstChild("Humanoid") then
+                        char.Humanoid:EquipTool(tool)
+                    end
+                    break
+                end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    _G.inf = true
+    while _G.inf do
+        task.wait(1)
+        local aux = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/Upbolt/Hydroxide/revision/ohaux.lua"))()
+        local char = player.Character
+        if char then
+            local harpoonScript = char:FindFirstChild("Harpoon") and char.Harpoon:FindFirstChild("LocalScript")
+            if harpoonScript then
+                local closure = aux.searchClosure(harpoonScript, "reload", 4, {
+                    [1] = "Enum",
+                    [2] = "UserInputState",
+                    [3] = "Cancel",
+                    [4] = Enum.UserInputState.Cancel,
+                    [5] = 1,
+                    [6] = "script"
+                })
+                if closure then
+                    debug.setupvalue(closure, 4, 9e999)
+                end
+            end
+        end
+    end
+end)
