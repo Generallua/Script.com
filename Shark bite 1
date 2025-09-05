@@ -1,6 +1,0 @@
-pcall(function()
-    queue_on_teleport([[loadstring(game:HttpGet("https://github.com/Generallua/-/raw/refs/heads/main/shark%20bite%201i"))()]])
-end)
-
-
-loadstring(game:HttpGet("https://github.com/Generallua/-/raw/refs/heads/main/shark%20bite%201i"))()
