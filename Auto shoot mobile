@@ -1,4 +1,4 @@
-local Players = game:GetService("Players")
+firesignalesignalal Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
@@ -34,10 +34,17 @@ while task.wait() do
         end
     end
 
-    if target then        
-firesignal(_G.btn.MouseButton1Down)
-firesignal(_G.btn.MouseButton1Click)
-firesignal(_G.btn.MouseButton1Up)
-firesignal(_G.btn.Activated)
+    if target then       
+local _G = _G or {}
+local input = {
+UserInputType = Enum.UserInputType.MouseButton1,
+Position = _G.btn.AbsolutePosition
+}
+
+firesignal(_G.btn.InputBegan, input, false)
+task.wait(1)
+firesignal(_G.btn.InputEnded, input, false)
+
+)
     end
 end
