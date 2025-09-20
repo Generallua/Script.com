@@ -1,0 +1,43 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+while task.wait() do
+    local center = Camera.ViewportSize / 2
+    local closestDist = 20
+    local target = nil
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local root = p.Character.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X,pos.Y) - Vector2.new(center.X,center.Y)).Magnitude
+                if dist < closestDist then
+                    -- Raycast ตรวจเส้นทาง
+                    local params = RaycastParams.new()
+                    params.FilterDescendantsInstances = {LocalPlayer.Character, p.Character}
+                    params.FilterType = Enum.RaycastFilterType.Blacklist
+                    params.IgnoreWater = true
+
+                    local origin = Camera.CFrame.Position
+                    local direction = (root.Position - origin)
+                    local result = workspace:Raycast(origin, direction, params)
+
+                    -- ผ่านได้ถ้าไม่มีชน หรือชนแต่ CanCollide = false
+                    if not result or (result.Instance and not result.Instance.CanCollide) then
+                        closestDist = dist
+                        target = p
+                    end
+                end
+            end
+        end
+    end
+
+    if target then        
+firesignal(_G.btn.MouseButton1Down)
+firesignal(_G.btn.MouseButton1Click)
+firesignal(_G.btn.MouseButton1Up)
+firesignal(_G.btn.Activated)
+    end
+end
