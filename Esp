@@ -3,8 +3,8 @@ local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
-_G.ESPEnabled = true      -- เปิด/ปิด ESP
-_G.OnlyEnemy = true       -- แสดงเฉพาะศัตรู
+--_G.ESPEnabled = true      -- เปิด/ปิด ESP
+--_G.OnlyEnemy = true       -- แสดงเฉพาะศัตรู
 
 local lines = {}
 
