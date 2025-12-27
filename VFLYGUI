@@ -1,4 +1,3 @@
--- 🌌 Vehicle Fly Script (GUI + Fly + Instant Tween Warp)
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -45,7 +44,6 @@ local function startFly()
 	bg.Parent = root
 end
 
--- 🌟 Instant warp (ทะลุสิ่งกีดขวางทันที)
 local function instantWarp(part, destination)
 	if tweening then return end
 	tweening = true
