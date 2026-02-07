@@ -1,0 +1,358 @@
+local EMBED = [[
+
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local jobId = game.JobId
+
+_G.F = false
+local vehicleflyspeed = 0
+local velocityName = "core_fly_vel"
+local gyroName = "core_fly_gyro"
+
+local success, gameInfo = pcall(function() return MarketplaceService:GetProductInfo(game.PlaceId) end)
+local mapName = success and gameInfo.Name or "Unknown Sector"
+
+local Theme = {
+    Frame = Color3.fromRGB(252,247,236),
+    FrameTransparency = 0, -- ไม่โปร่งใส
+    Button = Color3.fromRGB(245,238,224),
+    ButtonActive = Color3.fromRGB(200,160,100),
+    Accent = Color3.fromRGB(170,120,70),
+    Text = Color3.fromRGB(60,40,30),
+    TextDim = Color3.fromRGB(120,100,90)
+}
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "CoreHighContrast"
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999
+
+local baseZ = 1000
+
+local ToggleBtn = Instance.new("TextButton")
+ToggleBtn.Name = "Toggle"
+ToggleBtn.Parent = ScreenGui
+ToggleBtn.BackgroundColor3 = Theme.Button
+ToggleBtn.Position = UDim2.new(0,15,0.4,0)
+ToggleBtn.Size = UDim2.new(0,40,0,40)
+ToggleBtn.Text = "SYSTEM"
+ToggleBtn.Font = Enum.Font.GothamBlack
+ToggleBtn.TextColor3 = Theme.Accent
+ToggleBtn.TextSize = 13
+ToggleBtn.AutoButtonColor = false
+ToggleBtn.ZIndex = baseZ
+local tcorner = Instance.new("UICorner", ToggleBtn)
+tcorner.CornerRadius = UDim.new(0,8)
+local ToggleStroke = Instance.new("UIStroke", ToggleBtn)
+ToggleStroke.Color = Theme.Accent
+ToggleStroke.Thickness = 2
+ToggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Theme.Frame
+MainFrame.BackgroundTransparency = Theme.FrameTransparency
+MainFrame.Position = UDim2.new(0,-400,0.3,0)
+MainFrame.Size = UDim2.new(0,280,0,450)
+MainFrame.ZIndex = baseZ
+MainFrame.Active = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0,12)
+
+local Header = Instance.new("TextLabel")
+Header.Parent = MainFrame
+Header.Size = UDim2.new(1,0,0,50)
+Header.BackgroundTransparency = 1
+Header.Text = "Tool"
+Header.Font = Enum.Font.GothamBlack
+Header.TextColor3 = Theme.Accent
+Header.TextSize = 18
+Header.ZIndex = baseZ+1
+
+local Container = Instance.new("ScrollingFrame")
+Container.Parent = MainFrame
+Container.Size = UDim2.new(1,-20,1,-60)
+Container.Position = UDim2.new(0,10,0,50)
+Container.BackgroundTransparency = 1
+Container.BorderSizePixel = 0
+Container.ScrollBarThickness = 6
+Container.ScrollBarImageColor3 = Theme.Accent
+Container.ZIndex = baseZ+1
+Container.CanvasSize = UDim2.new(0,0,0,0)
+Container.AutomaticCanvasSize = Enum.AutomaticSize.Y -- เก็บไว้ถ้ารันบน runtime ที่รองรับ
+
+local Layout = Instance.new("UIListLayout", Container)
+Layout.Padding = UDim.new(0,6) -- ลดช่องว่างเพื่อเลื่อนน้อยลง
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+local Padding = Instance.new("UIPadding", Container)
+Padding.PaddingTop = UDim.new(0,5)
+
+-- ปรับ CanvasSize อัตโนมัติ (รองรับทั้งกรณีที่ AutomaticCanvasSize ไม่ทำงาน)
+local function updateCanvas()
+    pcall(function()
+        Container.CanvasSize = UDim2.new(0,0,0, Layout.AbsoluteContentSize.Y + 12)
+    end)
+end
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvas)
+task.spawn(updateCanvas)
+
+local function createLabel(text)
+    local l = Instance.new("TextLabel", Container)
+    l.Size = UDim2.new(1,0,0,20)
+    l.BackgroundTransparency = 1
+    l.Text = text
+    l.Font = Enum.Font.GothamBold
+    l.TextColor3 = Theme.TextDim
+    l.TextSize = 11
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.ZIndex = baseZ+2
+    return l
+end
+
+local function createButton(text, callback, isImportant)
+    local btn = Instance.new("TextButton", Container)
+    btn.Size = UDim2.new(0.95,0,0,36) -- เล็กลงนิดหน่อยเพื่อลดการเลื่อน
+    btn.BackgroundColor3 = isImportant and Theme.Accent or Theme.Button
+    btn.BackgroundTransparency = 0
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextColor3 = isImportant and Color3.new(1,1,1) or Theme.Text
+    btn.TextSize = 12
+    btn.AutoButtonColor = false
+    btn.ZIndex = baseZ+3
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Color = Theme.Accent
+    stroke.Thickness = isImportant and 2 or 1.2
+    stroke.Transparency = isImportant and 0 or 0.3
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Theme.ButtonActive}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Thickness = 2.5, Transparency = 0}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        local targetCol = isImportant and Theme.Accent or Theme.Button
+        TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = targetCol}):Play()
+        TweenService:Create(stroke, TweenInfo.new(0.15), {Thickness = isImportant and 2 or 1.2, Transparency = isImportant and 0 or 0.3}):Play()
+    end)
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+createLabel(" > SESSION INFO")
+createButton("COPY: " .. string.sub(mapName,1,15), function() setclipboard(mapName) end)
+createButton("COPY JOB ID", function() setclipboard(jobId) end)
+local posBtn = createButton("POS: 0, 0, 0", function()
+    if player.Character and player.Character.PrimaryPart then
+        setclipboard(tostring(player.Character.PrimaryPart.Position))
+    end
+end)
+
+createLabel(" > SYSTEM COMMAND")
+local InputContainer = Instance.new("Frame", Container)
+InputContainer.Size = UDim2.new(0.95,0,0,40)
+InputContainer.BackgroundColor3 = Theme.Button
+InputContainer.ZIndex = baseZ+3
+Instance.new("UICorner", InputContainer).CornerRadius = UDim.new(0,6)
+local InputStroke = Instance.new("UIStroke", InputContainer)
+InputStroke.Color = Theme.Accent
+InputStroke.Thickness = 1.5
+local HybridBox = Instance.new("TextBox", InputContainer)
+HybridBox.Size = UDim2.new(1,0,1,0)
+HybridBox.BackgroundTransparency = 1
+HybridBox.Font = Enum.Font.GothamBold
+HybridBox.Text = ""
+HybridBox.PlaceholderText = " → Spectate |  → Fly |  → Run"
+HybridBox.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+HybridBox.TextColor3 = Theme.Accent
+HybridBox.TextSize = 12
+HybridBox.ZIndex = baseZ+4
+
+local spectating = false
+local prevCameraSubject = nil
+local prevCameraType = nil
+
+local function tryStopSpectate()
+    if spectating then
+        pcall(function()
+            camera.CameraSubject = prevCameraSubject or player.Character and player.Character:FindFirstChildWhichIsA("Humanoid") or camera.CameraSubject
+            camera.CameraType = prevCameraType or Enum.CameraType.Custom
+        end)
+        spectating = false
+        prevCameraSubject = nil
+        prevCameraType = nil
+    end
+end
+
+HybridBox.FocusLost:Connect(function(enter)
+    if not enter then return end
+    local txt = tostring(HybridBox.Text or "")
+    txt = txt:match("^%s*(.-)%s*$") or txt
+    if txt == "" then
+        HybridBox.PlaceholderText = "INPUT EMPTY"
+        return
+    end
+
+    -- find player by name / displayname (partial match allowed, case-insensitive)
+    local tl = txt:lower()
+    local targetPlayer = nil
+    for _, pl in ipairs(Players:GetPlayers()) do
+        local pname = (pl.Name or ""):lower()
+        local dname = (pl.DisplayName or ""):lower()
+        if pname == tl or dname == tl or pname:find(tl,1,true) or dname:find(tl,1,true) then
+            targetPlayer = pl
+            break
+        end
+    end
+
+    local num = tonumber(txt)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Humanoid") then
+        -- start spectate
+        pcall(function()
+            if not spectating then
+                prevCameraSubject = camera.CameraSubject
+                prevCameraType = camera.CameraType
+            end
+            camera.CameraType = Enum.CameraType.Custom
+            camera.CameraSubject = targetPlayer.Character:FindFirstChild("Humanoid")
+            spectating = true
+            HybridBox.Text = ""
+            HybridBox.PlaceholderText = "SPECTATING: " .. (targetPlayer.Name or "??")
+            InputStroke.Color = Color3.fromRGB(0,255,0)
+        end)
+        task.wait(1)
+        InputStroke.Color = Theme.Accent
+        return
+    end
+
+    if num then
+        -- number input stops spectate and sets fly speed
+        tryStopSpectate()
+        vehicleflyspeed = num
+        if num > 0 then
+            _G.F = true
+            HybridBox.Text = ""
+            HybridBox.PlaceholderText = "SPEED SET: " .. num
+            InputStroke.Color = Color3.fromRGB(0,255,0)
+        else
+            _G.F = false
+            HybridBox.Text = ""
+            HybridBox.PlaceholderText = "SYSTEM IDLE"
+            InputStroke.Color = Theme.Accent
+        end
+        task.wait(1)
+        InputStroke.Color = Theme.Accent
+        return
+    end
+
+    -- otherwise try run as code; running code also stops spectate (ตามที่ขอ)
+    tryStopSpectate()
+    local ok, func = pcall(function() return loadstring(txt) end)
+    if ok and func then
+        task.spawn(func)
+        HybridBox.Text = ""
+        HybridBox.PlaceholderText = "EXECUTED"
+        InputStroke.Color = Color3.fromRGB(0,255,0)
+    else
+        HybridBox.Text = ""
+        HybridBox.PlaceholderText = "SYNTAX ERROR"
+        InputStroke.Color = Color3.fromRGB(255,0,0)
+    end
+    task.wait(1)
+    InputStroke.Color = Theme.Accent
+end)
+
+createLabel(" > EXTERNAL MODULES")
+createButton("LOAD HYDROIE", function()
+    loadstring(game:HttpGet("https://github.com/Generallua/Script.com/raw/refs/heads/main/Hydroi"))()
+end, true)
+createButton("LOAD DEX", function()
+    loadstring(game:HttpGet("https://github.com/Generallua/Script.com/raw/refs/heads/main/Dex"))()
+end, true)
+
+RunService.RenderStepped:Connect(function()
+    if player.Character and player.Character.PrimaryPart then
+        local p = player.Character.PrimaryPart.Position
+        posBtn.Text = string.format("POS: %.0f, %.0f, %.0f", p.X, p.Y, p.Z)
+    end
+    if not _G.F then
+        local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            for _, v in ipairs(root:GetChildren()) do
+                if v.Name == velocityName or v.Name == gyroName then v:Destroy() end
+            end
+        end
+        return
+    end
+    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local bv = root:FindFirstChild(velocityName) or Instance.new("BodyVelocity", root)
+    bv.Name = velocityName; bv.MaxForce = Vector3.one*9e9
+    local bg = root:FindFirstChild(gyroName) or Instance.new("BodyGyro", root)
+    bg.Name = gyroName; bg.MaxTorque = Vector3.one*9e9; bg.P=10000; bg.D=500
+    bg.CFrame = camera.CFrame
+    local success2, cm = pcall(function() return require(player.PlayerScripts.PlayerModule.ControlModule) end)
+    local move = success2 and cm:GetMoveVector() or Vector3.zero
+    local dir = camera.CFrame.RightVector * move.X + -camera.CFrame.LookVector * move.Z
+    local vert = Vector3.zero
+    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then vert = vert + Vector3.new(0,1,0) end
+    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then vert = vert + Vector3.new(0,-1,0) end
+    local target = (dir + vert).Unit * vehicleflyspeed
+    if (dir+vert).Magnitude == 0 then target = Vector3.zero end
+    bv.Velocity = bv.Velocity:Lerp(target, 0.2)
+end)
+
+local isOpen = false
+ToggleBtn.MouseButton1Click:Connect(function()
+    isOpen = not isOpen
+    local targetPos = isOpen and UDim2.new(0,90,0.3,0) or UDim2.new(0,-400,0.3,0)
+    TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = targetPos}):Play()
+    if isOpen then
+        ToggleBtn.Text = "CLOSE"
+        ToggleBtn.TextColor3 = Color3.fromRGB(255,50,50)
+        ToggleStroke.Color = Color3.fromRGB(255,50,50)
+    else
+        ToggleBtn.Text = "SYSTEM"
+        ToggleBtn.TextColor3 = Theme.Accent
+        ToggleStroke.Color = Theme.Accent
+    end
+end)
+
+local dragging, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging=true; dragStart=input.Position; startPos=MainFrame.Position end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local d = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+    end
+end)
+MainFrame.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging=false end end)
+
+
+]];
+pcall(function()
+local payload = "loadstring([[" .. EMBED .. "]])()";
+if (syn and syn.queue_on_teleport) then
+syn.queue_on_teleport(payload);
+elseif queue_on_teleport then
+queue_on_teleport(payload);
+else
+end
+end);
+local ok, err = pcall(function()
+loadstring(EMBED)();
+end);
+if not ok then
+warn("Failed to run embedded script: ", err);
+end
