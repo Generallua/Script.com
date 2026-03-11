@@ -1,4 +1,17 @@
+if not gethui then return end
 
+local hidden = gethui()
+local CoreGui = game:GetService("CoreGui")
+
+local folder = Instance.new("Folder")
+folder.Name = "HIDDEN_UI"
+folder.Parent = CoreGui
+
+for _, ui in ipairs(hidden:GetChildren()) do
+    pcall(function()
+        ui.Parent = folder
+    end)
+end
 
 local selection
 local nodes = {}
